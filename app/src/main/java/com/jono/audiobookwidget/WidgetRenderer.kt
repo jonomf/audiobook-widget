@@ -64,6 +64,7 @@ object WidgetRenderer {
         val author: String?,
         val fallback: String,
         val art: Uri?,
+        val updateAvailable: Boolean,
     )
 
     fun renderAll(ctx: Context) {
@@ -86,7 +87,8 @@ object WidgetRenderer {
         val source = Sources.byPkg(Store.selected(ctx)) ?: Sources.LIBBY
         if (!Media.hasAccess(ctx)) {
             return Model(
-                source, true, false, false, "Set up audiobook widget", null, null, "Tap to allow access", null
+                source, true, false, false, "Set up audiobook widget", null, null, "Tap to allow access", null,
+                Updater.updateAvailable(ctx),
             )
         }
         val controller = Media.controllerFor(ctx, source.pkg)
@@ -101,6 +103,7 @@ object WidgetRenderer {
             author = book?.author,
             fallback = if (book == null) "Tap to open ${source.label}" else "",
             art = Store.coverUri(ctx, source.pkg),
+            updateAvailable = Updater.updateAvailable(ctx),
         )
     }
 
@@ -122,6 +125,15 @@ object WidgetRenderer {
             else -> open
         }
         rv.setOnClickPendingIntent(R.id.play, control(AudiobookWidget.ACTION_PLAY_PAUSE))
+
+        // Update dot (top corner) when a newer build is on GitHub. Tap: download and install.
+        if (m.updateAvailable) {
+            val update = Intent(ctx, MainActivity::class.java).putExtra(MainActivity.EXTRA_UPDATE, true)
+            rv.setViewVisibility(R.id.update, View.VISIBLE)
+            rv.setOnClickPendingIntent(R.id.update, activity(ctx, 2, update))
+        } else {
+            rv.setViewVisibility(R.id.update, View.GONE)
+        }
 
         // App icon (beside the title, or under a tile's cover). Tap it to switch apps.
         // The large layout has its own two-icon switcher instead.

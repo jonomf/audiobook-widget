@@ -13,4 +13,16 @@
         <item name="android:padding">6dp</item>
         <item name="android:visibility">gone</item>
     </style>
+
+    <style name="UpdateDot">
+        <item name="android:layout_width">18dp</item>
+        <item name="android:layout_height">18dp</item>
+        <item name="android:layout_gravity">top|end</item>
+        <item name="android:layout_margin">3dp</item>
+        <item name="android:padding">3dp</item>
+        <item name="android:background">@drawable/update_bg</item>
+        <item name="android:src">@drawable/ic_download</item>
+        <item name="android:contentDescription">Update available</item>
+        <item name="android:visibility">gone</item>
+    </style>
 </resources>

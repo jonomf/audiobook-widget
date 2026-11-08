@@ -4,37 +4,48 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_bg"
-    android:padding="4dp">
+    android:background="@drawable/widget_bg">
 
     <FrameLayout
+        android:id="@+id/body"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="16dp">
+        android:padding="4dp">
 
-        <ImageView
-            android:id="@+id/art"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:contentDescription="Cover"
-            android:scaleType="fitCenter"
-            android:src="@drawable/art_placeholder" />
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/art"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Cover"
+                android:scaleType="fitCenter"
+                android:src="@drawable/art_placeholder" />
+
+            <ImageView
+                android:id="@+id/play"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+            android:layout_gravity="center"
+                android:background="@drawable/play_bg"
+                android:contentDescription="Play"
+                android:padding="10dp"
+                android:src="@drawable/ic_play" />
+        </FrameLayout>
 
         <ImageView
-            android:id="@+id/play"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-        android:layout_gravity="center"
-            android:background="@drawable/play_bg"
-            android:contentDescription="Play"
-            android:padding="10dp"
-            android:src="@drawable/ic_play" />
+            android:id="@+id/badge"
+            style="@style/Badge"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="bottom|end" />
     </FrameLayout>
 
+    <!-- Shown when a newer build is on GitHub; tap to update. -->
     <ImageView
-        android:id="@+id/badge"
-        style="@style/Badge"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:layout_gravity="bottom|end" />
+        android:id="@+id/update"
+        style="@style/UpdateDot" />
 </FrameLayout>

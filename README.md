@@ -23,6 +23,16 @@ https://github.com/jonomf/audiobook-widget/releases/latest
 Open it and allow installs from your browser when asked. Updates install over
 the old version (same signing key).
 
+## Updating
+From build 6 on, the app updates itself:
+- A small **download dot** appears in the widget's top corner when a newer build is on GitHub.
+  Tap it to download and install. The app checks every few hours, and whenever you open it.
+- Or long-press the widget → its **settings** entry (pencil) → **Update now**.
+
+One-time setup, in the app under **Updates**: paste a fine-grained GitHub token with
+*Contents: Read-only* on this repo (the app links to the token page). The first update also asks
+you to allow this app to install apps. Later updates may skip the confirm screen entirely.
+
 ## Setup
 1. Open **Audiobook** → **Allow notification access** → turn it on.
    - If the switch is greyed out ("Restricted setting"): in the app, tap **Open app info** →
@@ -40,4 +50,8 @@ other apps' media sessions. This app only looks at Libby and Audible.
 - `Store` keeps the last title, author and (pre-rounded) cover for each app.
 - To follow another app, add it to `Sources.kt` and to `<queries>` in the manifest.
 
-Every push to `main` builds a new APK release (GitHub Actions).
+- `Updater` + `InstallReceiver` handle self-updates. They're self-contained: copy them into
+  another app, change `REPO` / `ASSET`, and add the manifest entries (INTERNET,
+  REQUEST_INSTALL_PACKAGES, the receiver).
+
+Every push to `main` builds a new APK release tagged `build-N` (GitHub Actions); N is the versionCode.
