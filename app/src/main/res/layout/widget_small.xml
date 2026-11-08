@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2×1: cover (tap to open the app) and play/pause. -->
+<!-- 2×1 on narrow grids: cover, app icon, play/pause. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -20,24 +20,22 @@
         android:gravity="center_vertical|start"
         android:orientation="horizontal">
 
-        <FrameLayout
+        <ImageView
+            android:id="@+id/art"
             android:layout_width="48dp"
-            android:layout_height="48dp">
+            android:layout_height="48dp"
+            android:contentDescription="Cover"
+            android:scaleType="fitCenter"
+            android:src="@drawable/art_placeholder" />
 
-            <ImageView
-                android:id="@+id/art"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Cover"
-                android:scaleType="fitCenter"
-                android:src="@drawable/art_placeholder" />
-
-            <ImageView
-                android:id="@+id/badge"
-                style="@style/Badge"
-                android:layout_width="16dp"
-                android:layout_height="16dp" />
-        </FrameLayout>
+        <ImageView
+            android:id="@+id/badge"
+            style="@style/Badge"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top"
+            android:layout_marginStart="3dp"
+            android:padding="2dp" />
     </LinearLayout>
 
     <ImageView

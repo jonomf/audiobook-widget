@@ -5,13 +5,13 @@ in place of keeping both apps' widgets on the home screen.
 
 Resize it and the layout changes to fit. The setup screen lists each widget's
 real size and which layout it gets, for tuning the cutoffs in `WidgetRenderer.Kind`.
-- **1×1:** cover with a play/pause button on top.
-- **2×1:** cover with play/pause on it, then title and chapter (on narrow grids: cover and play/pause).
+- **1×1:** cover with a play/pause button on it, app icon beneath.
+- **2×1:** cover with play/pause on it, then [app icon] title, chapter, author.
 - **2×2:** big cover with play/pause.
-- **3×1 / 4×1:** cover, title, chapter · author, and play/pause. Tap `LIBBY ⇄` to switch apps.
-- **3×2 / 4×2 or bigger:** adds Libby / Audible chips plus skip back and skip forward.
+- **3×1 / 4×1:** cover, [app icon] title, chapter, author, play/pause.
+- **3×2 / 4×2 or bigger:** bigger cover and text (2-line title and chapter), plus an app switcher and skip back/forward.
   Skips use each app's own jump length when the app supports it, otherwise 30 seconds.
-- Every cover carries a small badge with the app's own icon, so you can tell Libby from Audible.
+- The app's own icon sits beside the title (tap it to switch apps), never on the cover.
 - Switches automatically to whichever app starts playing.
 - Remembers the last book in each app, so it still shows after the app closes.
   In that case the buttons open the app so you can resume there.

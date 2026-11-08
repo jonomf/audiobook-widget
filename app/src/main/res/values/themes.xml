@@ -1,33 +1,16 @@
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.DayNight" />
 
-    <style name="Chip">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
-        <item name="android:paddingTop">4dp</item>
-        <item name="android:paddingBottom">4dp</item>
-        <item name="android:textSize">12sp</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
-    </style>
-
-    <style name="ChipOn" parent="Chip">
-        <item name="android:background">@drawable/chip_on</item>
-        <item name="android:textColor">@color/btn_text</item>
-    </style>
-
-    <style name="ChipOff" parent="Chip">
-        <item name="android:background">@drawable/chip_off</item>
-        <item name="android:textColor">@color/chip_off_text</item>
-    </style>
-
-    <!-- App icon badge on the cover's corner, with a ring so it stands out from the art. -->
+    <!-- App icon next to the title (or below a tile's cover). Tap to switch apps. -->
     <style name="Badge">
-        <item name="android:layout_gravity">bottom|end</item>
-        <item name="android:background">@drawable/badge_bg</item>
-        <item name="android:padding">1.5dp</item>
         <item name="android:contentDescription">App</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="SwitchIcon">
+        <item name="android:layout_width">36dp</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:padding">6dp</item>
         <item name="android:visibility">gone</item>
     </style>
 </resources>

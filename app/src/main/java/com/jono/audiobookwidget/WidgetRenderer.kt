@@ -24,10 +24,10 @@ object WidgetRenderer {
     private enum class Kind(val layout: Int, val size: SizeF, val label: String) {
         TILE(R.layout.widget_tile, SizeF(50f, 50f), "cover + button"),
         SMALL(R.layout.widget_small, SizeF(100f, 50f), "cover, button"),
-        NARROW(R.layout.widget_narrow, SizeF(150f, 50f), "cover + button, title, chapter"),
+        NARROW(R.layout.widget_narrow, SizeF(150f, 50f), "cover + button, title, chapter, author"),
         TILE_BIG(R.layout.widget_tile, SizeF(120f, 120f), "big cover + button"),
-        COMPACT(R.layout.widget_compact, SizeF(220f, 50f), "cover, title, chapter, button"),
-        LARGE(R.layout.widget_large, SizeF(220f, 130f), "full, with chips and skips"),
+        COMPACT(R.layout.widget_compact, SizeF(220f, 50f), "cover, title, chapter, author, button"),
+        LARGE(R.layout.widget_large, SizeF(220f, 130f), "full, with app switcher and skips"),
     }
 
     /** Same rule Android uses to pick a layout, so the setup screen can say which one you'll get. */
@@ -105,22 +105,15 @@ object WidgetRenderer {
     }
 
     private fun fill(ctx: Context, rv: RemoteViews, m: Model, kind: Kind): RemoteViews {
-        // Every layout: cover, app-icon badge, play/pause.
+        // Every layout: cover and play/pause.
         if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
         else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
-        val icon = appIcon(ctx, m.source.pkg)
-        if (icon != null) {
-            rv.setImageViewBitmap(R.id.badge, icon)
-            rv.setContentDescription(R.id.badge, m.source.label)
-            rv.setViewVisibility(R.id.badge, View.VISIBLE)
-        } else {
-            rv.setViewVisibility(R.id.badge, View.GONE)
-        }
         rv.setImageViewResource(R.id.play, if (m.playing) R.drawable.ic_pause else R.drawable.ic_play)
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
 
         val setup = activity(ctx, 1, Intent(ctx, MainActivity::class.java))
         val open = openApp(ctx, m.source) ?: setup
+        val toggleApp = broadcast(ctx, AudiobookWidget.ACTION_TOGGLE)
 
         // With no live session (app closed), the buttons just open the app so you can resume there.
         fun control(action: String) = when {
@@ -130,68 +123,79 @@ object WidgetRenderer {
         }
         rv.setOnClickPendingIntent(R.id.play, control(AudiobookWidget.ACTION_PLAY_PAUSE))
 
+        // App icon (beside the title, or under a tile's cover). Tap it to switch apps.
+        // The large layout has its own two-icon switcher instead.
+        if (kind != Kind.LARGE) {
+            val icon = appIcon(ctx, m.source.pkg)
+            if (icon != null) {
+                rv.setImageViewBitmap(R.id.badge, icon)
+                rv.setContentDescription(R.id.badge, "${m.source.label}, tap to switch apps")
+                rv.setViewVisibility(R.id.badge, View.VISIBLE)
+                rv.setOnClickPendingIntent(R.id.badge, toggleApp)
+            }
+        }
+
         when (kind) {
             Kind.TILE, Kind.TILE_BIG -> {
                 // Tapping the cover around the button opens the app.
                 rv.setOnClickPendingIntent(R.id.art, if (m.setupNeeded) setup else open)
-                val buttonDp = if (kind == Kind.TILE) 40f else 56f
+                val buttonDp = if (kind == Kind.TILE) 36f else 56f
                 rv.setViewLayoutWidth(R.id.play, buttonDp, TypedValue.COMPLEX_UNIT_DIP)
                 rv.setViewLayoutHeight(R.id.play, buttonDp, TypedValue.COMPLEX_UNIT_DIP)
-                val padDp = buttonDp * 0.25f
-                val pad = (padDp * ctx.resources.displayMetrics.density).toInt()
+                val pad = (buttonDp * 0.25f * ctx.resources.displayMetrics.density).toInt()
                 rv.setViewPadding(R.id.play, pad, pad, pad, pad)
-                val badgeDp = if (kind == Kind.TILE) 20f else 26f
-                rv.setViewLayoutWidth(R.id.badge, badgeDp, TypedValue.COMPLEX_UNIT_DIP)
-                rv.setViewLayoutHeight(R.id.badge, badgeDp, TypedValue.COMPLEX_UNIT_DIP)
             }
             Kind.SMALL -> {
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
             }
             Kind.NARROW, Kind.COMPACT -> {
-                setText(rv, m, kind)
-                // In the narrow layout the play button sits on the cover, so the whole cover toggles.
-                if (kind == Kind.NARROW) rv.setOnClickPendingIntent(R.id.art, control(AudiobookWidget.ACTION_PLAY_PAUSE))
+                setText(rv, m)
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
-                rv.setTextViewText(R.id.source, "${m.source.label.uppercase()}  ⇄")
-                rv.setOnClickPendingIntent(R.id.source, broadcast(ctx, AudiobookWidget.ACTION_TOGGLE))
+                // In the narrow layout the play button sits on the cover, so the whole cover toggles.
+                if (kind == Kind.NARROW) {
+                    rv.setOnClickPendingIntent(R.id.art, control(AudiobookWidget.ACTION_PLAY_PAUSE))
+                } else {
+                    rv.setOnClickPendingIntent(R.id.art, if (m.setupNeeded) setup else open)
+                }
             }
             Kind.LARGE -> {
-                setText(rv, m, kind)
+                setText(rv, m)
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
+                rv.setOnClickPendingIntent(R.id.art, if (m.setupNeeded) setup else open)
                 rv.setOnClickPendingIntent(R.id.back, control(AudiobookWidget.ACTION_BACK))
                 rv.setOnClickPendingIntent(R.id.fwd, control(AudiobookWidget.ACTION_FWD))
-
-                val libby = m.source == Sources.LIBBY
-                rv.setViewVisibility(R.id.chip_libby_on, if (libby) View.VISIBLE else View.GONE)
-                rv.setViewVisibility(R.id.chip_libby_off, if (libby) View.GONE else View.VISIBLE)
-                rv.setViewVisibility(R.id.chip_audible_on, if (libby) View.GONE else View.VISIBLE)
-                rv.setViewVisibility(R.id.chip_audible_off, if (libby) View.VISIBLE else View.GONE)
-                rv.setOnClickPendingIntent(R.id.chip_libby_on, open)
-                rv.setOnClickPendingIntent(R.id.chip_audible_on, open)
-                rv.setOnClickPendingIntent(
-                    R.id.chip_libby_off, broadcast(ctx, AudiobookWidget.ACTION_SELECT, Sources.LIBBY.pkg)
-                )
-                rv.setOnClickPendingIntent(
-                    R.id.chip_audible_off, broadcast(ctx, AudiobookWidget.ACTION_SELECT, Sources.AUDIBLE.pkg)
-                )
+                switchIcon(ctx, rv, R.id.switch_libby, Sources.LIBBY, m, open)
+                switchIcon(ctx, rv, R.id.switch_audible, Sources.AUDIBLE, m, open)
             }
         }
         return rv
     }
 
-    /**
-     * Title always. Second line: the chapter first (it's what changes as you listen),
-     * then the author if there's room. The narrow layout shows only one of the two.
-     */
-    private fun setText(rv: RemoteViews, m: Model, kind: Kind) {
-        val detail = when {
-            m.chapter == null && m.author == null -> m.fallback
-            kind == Kind.NARROW -> m.chapter ?: m.author ?: ""
-            else -> listOfNotNull(m.chapter, m.author).joinToString(" · ")
+    /** Selected app: highlighted, tap opens it. Other app: dimmed, tap switches to it. */
+    private fun switchIcon(ctx: Context, rv: RemoteViews, id: Int, source: Source, m: Model, open: PendingIntent) {
+        val icon = appIcon(ctx, source.pkg)
+        if (icon == null) {
+            rv.setViewVisibility(id, View.GONE)
+            return
         }
+        val selected = source == m.source
+        rv.setViewVisibility(id, View.VISIBLE)
+        rv.setImageViewBitmap(id, icon)
+        rv.setInt(id, "setImageAlpha", if (selected) 255 else 110)
+        rv.setInt(id, "setBackgroundResource", if (selected) R.drawable.chip_on else 0)
+        rv.setOnClickPendingIntent(
+            id, if (selected) open else broadcast(ctx, AudiobookWidget.ACTION_SELECT, source.pkg)
+        )
+    }
+
+    /** Title, then chapter, then author, each on its own line. Short rows clip the lowest lines first. */
+    private fun setText(rv: RemoteViews, m: Model) {
         rv.setTextViewText(R.id.title, m.title)
-        rv.setTextViewText(R.id.detail, detail)
-        rv.setViewVisibility(R.id.detail, if (detail.isEmpty()) View.GONE else View.VISIBLE)
+        val chapter = m.chapter ?: m.fallback.takeIf { m.author == null && it.isNotEmpty() }
+        rv.setTextViewText(R.id.chapter, chapter ?: "")
+        rv.setViewVisibility(R.id.chapter, if (chapter.isNullOrEmpty()) View.GONE else View.VISIBLE)
+        rv.setTextViewText(R.id.author, m.author ?: "")
+        rv.setViewVisibility(R.id.author, if (m.author.isNullOrEmpty()) View.GONE else View.VISIBLE)
     }
 
     private val iconCache = mutableMapOf<String, Bitmap>()
