@@ -38,11 +38,13 @@ object WidgetRenderer {
         val switcher: Boolean = false,
         val recentSlots: Int = 0,
         val recentRows: Boolean = false,
+        val recentIcons: Boolean = recentRows,
         val expands: Boolean = true,
     ) {
         TILE(R.layout.widget_tile, SizeF(50f, 50f), "cover", text = false),
         STRIP_S(R.layout.widget_strip_s, SizeF(150f, 50f), "cover, title, chapter, time left, author", time = true),
-        STRIP(R.layout.widget_strip, SizeF(220f, 50f), "cover, text, time left", time = true),
+        STRIP(R.layout.widget_strip, SizeF(220f, 50f), "cover | text, time left | previous book",
+            time = true, recentSlots = 1, recentIcons = true),
         STRIP_L(R.layout.widget_strip_l, SizeF(320f, 50f), "cover, text, time left, recent covers",
             time = true, recentSlots = 3),
         SQUARE(R.layout.widget_square, SizeF(150f, 150f), "big cover, title, chapter"),
@@ -243,6 +245,8 @@ object WidgetRenderer {
             if (kind.recentRows) {
                 rv.setTextViewText(REC_TITLE[i], r.title)
                 rv.setTextViewText(REC_SUB[i], listOfNotNull(r.chapter, r.author).joinToString(" · "))
+            }
+            if (kind.recentIcons) {
                 val icon = appIcon(ctx, r.pkg)
                 if (icon != null) {
                     rv.setImageViewBitmap(REC_ICON[i], icon)

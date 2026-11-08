@@ -5,7 +5,8 @@ in place of keeping both apps' widgets on the home screen.
 
 It uses all the space you give it. Resize it and the layout changes:
 - **1×1:** the cover, as big as it gets, with play/pause on its corner.
-- **2×1 / 3×1:** cover with play/pause, then [app icon] title, chapter, live "time left", author.
+- **2×1:** cover with play/pause, then [app icon] title, chapter, live "time left", author.
+- **3×1:** in thirds: cover with play/pause | the same text | your previous book (app icon + cover; tap to switch to it).
 - **4×1:** the same plus covers of your other recent books (tap one to switch to it).
 - **2×2:** big cover, title, chapter.
 - **3×2 / 4×2:** big cover, all text, and every control: chapter back/next, skip back/forward,
