@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 3x1 in thirds: art with play/pause | text | 2x2 grid of other recent items. -->
+<!-- 3x1 in thirds: art filled by a big play/pause | text (tap to expand) | 2x2 grid of other recent items. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"

@@ -295,7 +295,8 @@ object WidgetRenderer {
             ctx, 3 + p.ordinal,
             Intent(ctx, PanelActivity::class.java).putExtra(PanelActivity.EXTRA_PROFILE, p.name),
         )
-        // Smaller sizes: tapping the art or text opens the full panel. The full view opens the app.
+        // Smaller sizes: tapping the text opens the full panel (the art is the play button there).
+        // Big sizes: tapping the art opens the panel too; the full view opens the app.
         val mainTap = when {
             m.setupNeeded -> setup
             kind.expands -> expand
@@ -313,7 +314,18 @@ object WidgetRenderer {
         if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
         else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
         rv.setOnClickPendingIntent(R.id.art, mainTap)
-        rv.setImageViewResource(R.id.play, if (m.playing) R.drawable.ic_pause else R.drawable.ic_play)
+        // Small sizes: play/pause fills the art (the left of a strip is one big button).
+        // Big sizes: a regular button in the controls row.
+        val onArt = !kind.player
+        rv.setImageViewResource(
+            R.id.play,
+            when {
+                onArt && m.playing -> R.drawable.ic_pause_big
+                onArt -> R.drawable.ic_play_big
+                m.playing -> R.drawable.ic_pause
+                else -> R.drawable.ic_play
+            },
+        )
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
         rv.setOnClickPendingIntent(R.id.play, control(MediaWidget.ACTION_PLAY_PAUSE))
 

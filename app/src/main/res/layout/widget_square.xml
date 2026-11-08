@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2x2: big art with play/pause, then the text. Tap to expand. -->
+<!-- 2x2: big art filled by a big play/pause, then the text (tap to expand). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"

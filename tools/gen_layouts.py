@@ -323,14 +323,14 @@ STRIP_ATTRS = '\n    android:gravity="center_vertical"'
 L = {}
 
 L['widget_tile'] = root('FrameLayout', cover_overlay('wrap_content', 'match_parent', gravity='center', update=True),
-    '1x1: art as big as it gets, play/pause on its corner; tap the art to expand.', pad='4dp')
+    '1x1: art as big as it gets, with a big play/pause filling it.', pad='4dp')
 
 L['widget_strip_s'] = root('LinearLayout', cover_overlay() + '\n' + text_col(margin='8dp', time=True),
-    '2x1: art with play/pause, then [app icon] title / line 2 / time left / line 3. Tap to expand.',
+    '2x1: art filled by a big play/pause, then [app icon] title / line 2 / time left / line 3. Tap text to expand.',
     orient='horizontal', pad='5dp', extra=STRIP_ATTRS)
 
 L['widget_strip'] = root('LinearLayout', cover_overlay() + '\n' + text_col(time=True) + '\n' + GRID,
-    '3x1 in thirds: art with play/pause | text | 2x2 grid of other recent items.',
+    '3x1 in thirds: art filled by a big play/pause | text (tap to expand) | 2x2 grid of other recent items.',
     orient='horizontal', pad='5dp', extra=STRIP_ATTRS)
 
 L['widget_strip_l'] = root('LinearLayout', cover_overlay() + '\n' + text_col(time=True) + '''
@@ -362,7 +362,7 @@ L['widget_strip_l'] = root('LinearLayout', cover_overlay() + '\n' + text_col(tim
 L['widget_square'] = root('LinearLayout',
     cover_overlay('wrap_content', '0dp', gravity='center_horizontal', weight='1') + '\n' +
     text_col(width='match_parent', height='wrap_content', weight=None, margin=None),
-    '2x2: big art with play/pause, then the text. Tap to expand.', orient='vertical', pad='8dp')
+    '2x2: big art filled by a big play/pause, then the text (tap to expand).', orient='vertical', pad='8dp')
 
 L['widget_large'] = root('LinearLayout',
     '''<LinearLayout

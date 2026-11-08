@@ -21,15 +21,13 @@
         <item name="android:contentDescription">Cover</item>
     </style>
 
-    <!-- Play/pause sitting on the cover's corner (small sizes). -->
+    <!-- Play/pause filling the art (small sizes): big icon on a soft dark circle, the whole art is the button. -->
     <style name="PlayOverlay">
-        <item name="android:layout_width">30dp</item>
-        <item name="android:layout_height">30dp</item>
-        <item name="android:layout_gravity">bottom|end</item>
-        <item name="android:layout_margin">4dp</item>
-        <item name="android:background">@drawable/play_bg</item>
-        <item name="android:padding">7dp</item>
-        <item name="android:src">@drawable/ic_play</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@drawable/play_scrim</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:src">@drawable/ic_play_big</item>
         <item name="android:contentDescription">Play</item>
     </style>
 

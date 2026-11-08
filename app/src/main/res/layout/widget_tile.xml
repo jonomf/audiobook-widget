@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 1x1: art as big as it gets, play/pause on its corner; tap the art to expand. -->
+<!-- 1x1: art as big as it gets, with a big play/pause filling it. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
