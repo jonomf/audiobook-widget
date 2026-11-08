@@ -23,6 +23,7 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var accessButton: Button
     private lateinit var sizes: TextView
+    private lateinit var appActions: TextView
     private lateinit var updateStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +94,14 @@ class MainActivity : Activity() {
             }
         })
 
+        // --- What each app allows (e.g. whether bookmarks can go into the app itself) ---
+        col.addView(heading("App actions"))
+        appActions = TextView(this).apply {
+            textSize = 14f
+            setTextIsSelectable(true)
+        }
+        col.addView(appActions)
+
         // --- Your widgets ---
         col.addView(heading("Your widgets"))
         sizes = TextView(this).apply {
@@ -110,11 +119,30 @@ class MainActivity : Activity() {
         status.text = if (granted) "✓ Notification access is on" else "Notification access is off"
         accessButton.text = if (granted) "Notification access settings" else "Allow notification access"
         sizes.text = WidgetRenderer.describeSizes(this)
+        appActions.text = describeAppActions()
         WidgetRenderer.renderAll(this)
         if (granted) RecentFetcher.fillGaps(this) { WidgetRenderer.renderAll(this) }
         val build = packageManager.getPackageInfo(packageName, 0).longVersionCode
         updateStatus.text = "You're on build $build. Newer builds are on GitHub; " +
             "download one and open it to install over this version."
+    }
+
+    /** Extra actions each playing app offers through Android's media controls, and what that means for bookmarks. */
+    private fun describeAppActions(): String {
+        if (!Media.hasAccess(this)) return "Turn on notification access to see this."
+        val controllers = Media.controllers(this)
+        if (controllers.isEmpty()) return "Play something in Libby or Audible, then come back here."
+        return controllers.joinToString("\n\n") { c ->
+            val label = Sources.byPkg(c.packageName)?.label ?: c.packageName
+            val names = Media.customActions(c).map { it.name.toString() }
+            val list = if (names.isEmpty()) "no extra actions" else names.joinToString(", ")
+            val bookmarks = if (Media.bookmarkAction(c) != null) {
+                "Bookmarks go into $label too."
+            } else {
+                "No bookmark action, so bookmarks are saved in this widget only."
+            }
+            "• $label: $list\n  $bookmarks"
+        }
     }
 
     private fun heading(text: String) = TextView(this).apply {

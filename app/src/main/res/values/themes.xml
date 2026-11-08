@@ -44,10 +44,14 @@
         <item name="android:contentDescription">Play</item>
     </style>
 
+    <!-- Control buttons share the row evenly, so they all fit at any width. -->
     <style name="Ctl">
-        <item name="android:layout_width">38dp</item>
+        <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">38dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:maxWidth">48dp</item>
         <item name="android:padding">8dp</item>
+        <item name="android:scaleType">fitCenter</item>
         <item name="android:visibility">gone</item>
     </style>
 
@@ -133,6 +137,22 @@
         <item name="android:layout_width">32dp</item>
         <item name="android:layout_height">32dp</item>
         <item name="android:padding">5dp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <!-- Bookmarks list rows (full view): "Ch. 3 · 12:34" and when. -->
+    <style name="BookmarkRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="GridCell">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:visibility">gone</item>
     </style>
 

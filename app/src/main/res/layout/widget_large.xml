@@ -89,6 +89,12 @@
             style="@style/Ctl"
             android:contentDescription="Next chapter"
             android:src="@drawable/ic_skip_next" />
+        <ImageView
+            android:id="@+id/bookmark"
+            style="@style/Ctl"
+            android:contentDescription="Bookmark"
+            android:src="@drawable/ic_bookmark" />
+
         <TextView
             android:id="@+id/speed"
             style="@style/SpeedChip" />

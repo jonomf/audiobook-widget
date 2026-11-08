@@ -88,9 +88,86 @@
             style="@style/Ctl"
             android:contentDescription="Next chapter"
             android:src="@drawable/ic_skip_next" />
+        <ImageView
+            android:id="@+id/bookmark"
+            style="@style/Ctl"
+            android:contentDescription="Bookmark"
+            android:src="@drawable/ic_bookmark" />
+
         <TextView
             android:id="@+id/speed"
             style="@style/SpeedChip" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/bm_label"
+        style="@style/SectionLabel"
+        android:text="Bookmarks" />
+
+    <LinearLayout
+        android:id="@+id/bm1"
+        style="@style/BookmarkRow">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="6dp"
+            android:src="@drawable/ic_bookmark" />
+
+        <TextView
+            android:id="@+id/bm1_text"
+            style="@style/RecentTitle"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/bm1_when"
+            style="@style/RecentSub"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bm2"
+        style="@style/BookmarkRow">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="6dp"
+            android:src="@drawable/ic_bookmark" />
+
+        <TextView
+            android:id="@+id/bm2_text"
+            style="@style/RecentTitle"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/bm2_when"
+            style="@style/RecentSub"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bm3"
+        style="@style/BookmarkRow">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="6dp"
+            android:src="@drawable/ic_bookmark" />
+
+        <TextView
+            android:id="@+id/bm3_text"
+            style="@style/RecentTitle"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/bm3_when"
+            style="@style/RecentSub"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 
     <LinearLayout

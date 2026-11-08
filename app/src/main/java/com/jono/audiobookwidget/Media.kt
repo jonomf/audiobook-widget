@@ -58,6 +58,25 @@ object Media {
         return ((duration - pos) / speed(c)).toLong()
     }
 
+    /** Current position on the app's timeline, accounting for time since the app last reported it. */
+    fun positionMs(c: MediaController): Long? {
+        val st = c.playbackState ?: return null
+        if (st.position < 0L) return null
+        var pos = st.position
+        if (st.state == PlaybackState.STATE_PLAYING) {
+            pos += ((SystemClock.elapsedRealtime() - st.lastPositionUpdateTime) * st.playbackSpeed).toLong()
+        }
+        return pos
+    }
+
+    /** Extra actions the app offers through its media session (like the buttons cars show). */
+    fun customActions(c: MediaController): List<PlaybackState.CustomAction> =
+        c.playbackState?.customActions.orEmpty()
+
+    /** The app's own bookmark action, if it offers one. */
+    fun bookmarkAction(c: MediaController): PlaybackState.CustomAction? =
+        customActions(c).firstOrNull { "${it.action} ${it.name}".contains("bookmark", ignoreCase = true) }
+
     /** 1× → 1.25× → 1.5× → 1.75× → 2× → 1×. */
     fun cycleSpeed(c: MediaController) {
         val speeds = floatArrayOf(1f, 1.25f, 1.5f, 1.75f, 2f)

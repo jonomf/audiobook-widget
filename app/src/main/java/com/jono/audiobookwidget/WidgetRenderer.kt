@@ -11,6 +11,7 @@ import android.graphics.Canvas
 import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.SystemClock
+import android.text.format.DateUtils
 import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
@@ -39,12 +40,13 @@ object WidgetRenderer {
         val recentSlots: Int = 0,
         val recentRows: Boolean = false,
         val recentIcons: Boolean = recentRows,
+        val bookmarkRows: Int = 0,
         val expands: Boolean = true,
     ) {
         TILE(R.layout.widget_tile, SizeF(50f, 50f), "cover", text = false),
         STRIP_S(R.layout.widget_strip_s, SizeF(150f, 50f), "cover, title, chapter, time left, author", time = true),
-        STRIP(R.layout.widget_strip, SizeF(220f, 50f), "cover | text, time left | previous book",
-            time = true, recentSlots = 1, recentIcons = true),
+        STRIP(R.layout.widget_strip, SizeF(220f, 50f), "cover | text, time left | 2×2 recent books",
+            time = true, recentSlots = 4),
         STRIP_L(R.layout.widget_strip_l, SizeF(320f, 50f), "cover, text, time left, recent covers",
             time = true, recentSlots = 3),
         SQUARE(R.layout.widget_square, SizeF(150f, 150f), "big cover, title, chapter"),
@@ -53,7 +55,8 @@ object WidgetRenderer {
         TALL(R.layout.widget_tall, SizeF(150f, 250f), "cover, text, controls, recent books",
             time = true, controls = true, recentSlots = 3, recentRows = true),
         XL(R.layout.widget_xl, SizeF(260f, 250f), "everything", time = true, controls = true,
-            chapterButtons = true, switcher = true, recentSlots = 4, recentRows = true, expands = false),
+            chapterButtons = true, switcher = true, recentSlots = 4, recentRows = true, bookmarkRows = 3,
+            expands = false),
     }
 
     private class Model(
@@ -69,6 +72,7 @@ object WidgetRenderer {
         val canSetSpeed: Boolean,
         val canSkipChapters: Boolean,
         val recents: List<Store.Book>,
+        val bookmarks: List<Bookmarks.Mark>,
     )
 
     private val REC = intArrayOf(R.id.rec1, R.id.rec2, R.id.rec3, R.id.rec4)
@@ -76,6 +80,9 @@ object WidgetRenderer {
     private val REC_ICON = intArrayOf(R.id.rec1_icon, R.id.rec2_icon, R.id.rec3_icon, R.id.rec4_icon)
     private val REC_TITLE = intArrayOf(R.id.rec1_title, R.id.rec2_title, R.id.rec3_title, R.id.rec4_title)
     private val REC_SUB = intArrayOf(R.id.rec1_sub, R.id.rec2_sub, R.id.rec3_sub, R.id.rec4_sub)
+    private val BM = intArrayOf(R.id.bm1, R.id.bm2, R.id.bm3)
+    private val BM_TEXT = intArrayOf(R.id.bm1_text, R.id.bm2_text, R.id.bm3_text)
+    private val BM_WHEN = intArrayOf(R.id.bm1_when, R.id.bm2_when, R.id.bm3_when)
 
     /** In-app views (the expand panel) that mirror the widget and redraw with it. */
     val listeners = CopyOnWriteArraySet<() -> Unit>()
@@ -129,7 +136,7 @@ object WidgetRenderer {
         if (!Media.hasAccess(ctx)) {
             return Model(
                 source, true, false, false, null, null, "Tap to allow access",
-                null, 1f, false, false, emptyList(),
+                null, 1f, false, false, emptyList(), emptyList(),
             )
         }
         val c = Media.controllerFor(ctx, source.pkg)
@@ -149,8 +156,20 @@ object WidgetRenderer {
                 Media.supports(it, PlaybackState.ACTION_SKIP_TO_NEXT) ||
                     Media.supports(it, PlaybackState.ACTION_SKIP_TO_PREVIOUS)
             } ?: false,
-            recents = recents.filter { it.key != book?.key },
+            recents = distinctRecents(recents, book),
+            bookmarks = book?.let { Bookmarks.forBook(ctx, it.key) }.orEmpty(),
         )
+    }
+
+    /**
+     * Recent books with no repeats: the book in the main spot is never listed again, and a book
+     * that shows up twice (e.g. under both apps, or reported slightly differently) appears once.
+     */
+    private fun distinctRecents(all: List<Store.Book>, main: Store.Book?): List<Store.Book> {
+        fun norm(t: String) = t.lowercase().filter { it.isLetterOrDigit() }
+        val seen = mutableSetOf<String>()
+        main?.let { seen.add(norm(it.title)) }
+        return all.filter { it.key != main?.key && seen.add(norm(it.title)) }
     }
 
     private fun fill(ctx: Context, rv: RemoteViews, m: Model, kind: Kind): RemoteViews {
@@ -216,6 +235,8 @@ object WidgetRenderer {
                 rv.setOnClickPendingIntent(R.id.prev, control(AudiobookWidget.ACTION_PREV))
                 rv.setOnClickPendingIntent(R.id.next, control(AudiobookWidget.ACTION_NEXT))
             }
+            rv.setViewVisibility(R.id.bookmark, View.VISIBLE)
+            rv.setOnClickPendingIntent(R.id.bookmark, control(AudiobookWidget.ACTION_BOOKMARK))
             if (m.canSetSpeed || m.speed != 1f) {
                 rv.setTextViewText(R.id.speed, speedLabel(m.speed))
                 rv.setViewVisibility(R.id.speed, View.VISIBLE)
@@ -256,6 +277,28 @@ object WidgetRenderer {
         }
         if (kind.recentRows) {
             rv.setViewVisibility(R.id.recent_label, if (m.recents.isEmpty()) View.GONE else View.VISIBLE)
+        }
+
+        // Bookmarks for the book in the main spot, newest first. Tap: jump there.
+        if (kind.bookmarkRows > 0) {
+            rv.setViewVisibility(R.id.bm_label, if (m.bookmarks.isEmpty()) View.GONE else View.VISIBLE)
+            for (i in 0 until kind.bookmarkRows) {
+                val b = m.bookmarks.getOrNull(i)
+                if (b == null) {
+                    rv.setViewVisibility(BM[i], View.GONE)
+                    continue
+                }
+                rv.setViewVisibility(BM[i], View.VISIBLE)
+                val where = listOfNotNull(b.chapter, Bookmarks.formatPosition(b.positionMs)).joinToString(" · ")
+                rv.setTextViewText(BM_TEXT[i], where)
+                rv.setTextViewText(
+                    BM_WHEN[i],
+                    DateUtils.getRelativeTimeSpanString(b.createdAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS),
+                )
+                rv.setOnClickPendingIntent(
+                    BM[i], if (m.hasSession) broadcast(ctx, AudiobookWidget.ACTION_JUMP, b.createdAt.toString()) else open,
+                )
+            }
         }
         return rv
     }

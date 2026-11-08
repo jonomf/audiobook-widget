@@ -6,10 +6,10 @@ in place of keeping both apps' widgets on the home screen.
 It uses all the space you give it. Resize it and the layout changes:
 - **1×1:** the cover, as big as it gets, with play/pause on its corner.
 - **2×1:** cover with play/pause, then [app icon] title, chapter, live "time left", author.
-- **3×1:** in thirds: cover with play/pause | the same text | your previous book (app icon + cover; tap to switch to it).
+- **3×1:** in thirds: cover with play/pause | the same text | a 2×2 grid of recent books from either app (no repeats; tap one to switch to it).
 - **4×1:** the same plus covers of your other recent books (tap one to switch to it).
 - **2×2:** big cover, title, chapter.
-- **3×2 / 4×2:** big cover, all text, and every control: chapter back/next, skip back/forward,
+- **3×2 / 4×2:** big cover, all text, and every control: chapter back/next, skip back/forward, bookmark,
   play/pause, playback speed (when the app allows it).
 - **2×3+:** cover, text, controls, and a list of recent books.
 - **4×3+:** everything: big cover, all text, every control, Libby/Audible switcher, recent books.
@@ -18,6 +18,9 @@ On every smaller size, **tap the cover or text to open the full panel**: the 4×
 over your home screen. Tap outside it to close.
 
 - The app's own icon sits beside the title; tap it to switch apps.
+- **Bookmarks:** the bookmark button saves book, chapter and position here (and in Libby/Audible
+  too if the app offers a bookmark action; the setup screen's "App actions" says which). The full
+  view lists the current book's bookmarks; tap one to jump back while that book is playing.
 - Switches automatically to whichever app starts playing.
 - Remembers the last book in each app, so it still shows after the app closes.
   In that case the buttons open the app so you can resume there.
