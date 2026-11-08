@@ -19,6 +19,7 @@ import android.widget.Toast
 class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var accessButton: Button
+    private lateinit var sizes: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +59,18 @@ class MainActivity : Activity() {
         })
 
         col.addView(TextView(this).apply {
+            text = "Your widgets"
+            textSize = 16f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, dp(24), 0, dp(4))
+        })
+        sizes = TextView(this).apply {
+            textSize = 14f
+            setTextIsSelectable(true)
+        }
+        col.addView(sizes)
+
+        col.addView(TextView(this).apply {
             text = "Notification access is how Android lets an app see and control other apps' playback. " +
                 "This app only looks at Libby and Audible, and never reads your notifications.\n\n" +
                 "If the switch is greyed out (\"Restricted setting\"), that's because this app was " +
@@ -84,6 +97,7 @@ class MainActivity : Activity() {
         val granted = Media.hasAccess(this)
         status.text = if (granted) "✓ Notification access is on" else "Notification access is off"
         accessButton.text = if (granted) "Notification access settings" else "Allow notification access"
+        sizes.text = WidgetRenderer.describeSizes(this)
         WidgetRenderer.renderAll(this)
     }
 

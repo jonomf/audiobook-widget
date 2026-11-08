@@ -40,7 +40,9 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:letterSpacing="0.08"
+                android:maxLines="1"
                 android:paddingEnd="12dp"
+                android:singleLine="true"
                 android:text="LIBBY  ⇄"
                 android:textColor="@color/accent_text"
                 android:textSize="10sp" />

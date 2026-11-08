@@ -20,7 +20,8 @@ import kotlin.math.min
  * widget still shows it after the app closes, and which app is selected.
  */
 object Store {
-    data class Book(val title: String, val detail: String)
+    /** Book title plus the chapter you're on (shortened) and the author; either may be missing. */
+    data class Book(val title: String, val chapter: String?, val author: String?)
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("state", Context.MODE_PRIVATE)
 
@@ -34,7 +35,11 @@ object Store {
     fun book(ctx: Context, pkg: String): Book? {
         val p = prefs(ctx)
         val title = p.getString("title_$pkg", null) ?: return null
-        return Book(title, p.getString("detail_$pkg", null) ?: "")
+        return Book(
+            title,
+            p.getString("chapter_$pkg", null)?.takeIf { it.isNotBlank() },
+            p.getString("author_$pkg", null)?.takeIf { it.isNotBlank() },
+        )
     }
 
     /** Saves what a session is showing. Returns a signature so callers can skip redundant redraws. */
@@ -57,9 +62,10 @@ object Store {
             // Audiobook apps usually put the book in "album" and the chapter in "title".
             val book = album ?: title
             if (book != null) {
-                val chapter = title?.takeIf { it != book }
+                val chapter = title?.takeIf { it != book }?.let { shortenChapter(it, book) }
                 edit.putString("title_$pkg", book)
-                    .putString("detail_$pkg", listOfNotNull(author, chapter).joinToString(" · "))
+                    .putString("chapter_$pkg", chapter ?: "")
+                    .putString("author_$pkg", author ?: "")
 
                 if (p.getString("cover_key_$pkg", null) != book) {
                     val bmp = md.getBitmap(MediaMetadata.METADATA_KEY_ART)
@@ -79,7 +85,7 @@ object Store {
         edit.apply()
 
         return listOf(
-            pkg, playing, p.getString("title_$pkg", ""), p.getString("detail_$pkg", ""),
+            pkg, playing, p.getString("title_$pkg", ""), p.getString("chapter_$pkg", ""), p.getString("author_$pkg", ""),
             p.getString("cover_key_$pkg", ""), p.getString("selected", ""),
         ).joinToString("|")
     }
@@ -113,6 +119,16 @@ object Store {
         } catch (e: Exception) {
             coverFile(ctx, pkg).delete()
         }
+    }
+
+    /** "My Book - Chapter 2: The Storm" → "Ch. 2: The Storm", so the part that changes fits. */
+    private fun shortenChapter(raw: String, book: String): String {
+        var s = raw.trim()
+        if (s.length > book.length && s.startsWith(book, ignoreCase = true)) {
+            s = s.substring(book.length).trimStart(' ', '-', '–', '—', ':', '|', ',', '.')
+        }
+        s = s.replace(Regex("^chapter\\s+", RegexOption.IGNORE_CASE), "Ch. ")
+        return s.ifBlank { raw.trim() }
     }
 
     private fun MediaMetadata.text(key: String): String? = getString(key)?.takeIf { it.isNotBlank() }

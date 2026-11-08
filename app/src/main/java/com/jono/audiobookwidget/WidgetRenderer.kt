@@ -13,13 +13,42 @@ import android.widget.RemoteViews
 
 object WidgetRenderer {
 
-    /** Every size the widget can take. Android picks the biggest one that fits the widget's current size. */
-    private enum class Kind(val layout: Int, val minSize: SizeF) {
-        TILE(R.layout.widget_tile, SizeF(40f, 40f)),           // 1×1: cover + play/pause
-        SMALL(R.layout.widget_small, SizeF(100f, 40f)),        // 2×1: cover, play/pause
-        TILE_BIG(R.layout.widget_tile, SizeF(100f, 100f)),     // 2×2: big cover + play/pause
-        COMPACT(R.layout.widget_compact, SizeF(170f, 40f)),    // 3×1, 4×1: cover, title, author, play/pause
-        LARGE(R.layout.widget_large, SizeF(170f, 130f)),       // 3×2, 4×2+: app chips, skip buttons
+    /**
+     * Every layout, with the size (dp) it's designed for. Android shows the layout whose size
+     * fits inside the widget and is closest to it. Typical 4-column grid: 1 cell ≈ 80dp wide,
+     * 2 ≈ 180, 3 ≈ 270, 4 ≈ 360; one row ≈ 70–100dp tall. The setup screen lists the real sizes.
+     */
+    private enum class Kind(val layout: Int, val size: SizeF, val label: String) {
+        TILE(R.layout.widget_tile, SizeF(50f, 50f), "cover + button"),
+        SMALL(R.layout.widget_small, SizeF(100f, 50f), "cover, button"),
+        NARROW(R.layout.widget_narrow, SizeF(150f, 50f), "title, chapter, button"),
+        TILE_BIG(R.layout.widget_tile, SizeF(120f, 120f), "big cover + button"),
+        COMPACT(R.layout.widget_compact, SizeF(220f, 50f), "cover, title, chapter, button"),
+        LARGE(R.layout.widget_large, SizeF(220f, 130f), "full, with chips and skips"),
+    }
+
+    /** Same rule Android uses to pick a layout, so the setup screen can say which one you'll get. */
+    private fun bestFit(w: Float, h: Float): Kind {
+        val fitting = Kind.values().filter { it.size.width <= w && it.size.height <= h }
+        if (fitting.isEmpty()) return Kind.TILE
+        return fitting.minByOrNull {
+            val dw = w - it.size.width
+            val dh = h - it.size.height
+            dw * dw + dh * dh
+        } ?: Kind.TILE
+    }
+
+    /** One line per widget on the home screen: its portrait size and the layout it shows. */
+    fun describeSizes(ctx: Context): String {
+        val mgr = AppWidgetManager.getInstance(ctx)
+        val ids = mgr.getAppWidgetIds(ComponentName(ctx, AudiobookWidget::class.java))
+        if (ids.isEmpty()) return "No widget on your home screen yet."
+        return ids.joinToString("\n") { id ->
+            val o = mgr.getAppWidgetOptions(id)
+            val w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+            val h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+            "• ${w}×${h} dp → ${bestFit(w.toFloat(), h.toFloat()).label}"
+        }
     }
 
     private class Model(
@@ -28,7 +57,9 @@ object WidgetRenderer {
         val hasSession: Boolean,
         val playing: Boolean,
         val title: String,
-        val detail: String,
+        val chapter: String?,
+        val author: String?,
+        val fallback: String,
         val art: Uri?,
     )
 
@@ -43,7 +74,7 @@ object WidgetRenderer {
         val m = model(ctx)
         return RemoteViews(
             Kind.values().associate { kind ->
-                kind.minSize to fill(ctx, RemoteViews(ctx.packageName, kind.layout), m, kind)
+                kind.size to fill(ctx, RemoteViews(ctx.packageName, kind.layout), m, kind)
             }
         )
     }
@@ -51,27 +82,31 @@ object WidgetRenderer {
     private fun model(ctx: Context): Model {
         val source = Sources.byPkg(Store.selected(ctx)) ?: Sources.LIBBY
         if (!Media.hasAccess(ctx)) {
-            return Model(source, true, false, false, "Set up audiobook widget", "Tap to allow access", null)
+            return Model(
+                source, true, false, false, "Set up audiobook widget", null, null, "Tap to allow access", null
+            )
         }
         val controller = Media.controllerFor(ctx, source.pkg)
         val book = Store.book(ctx, source.pkg)
-        val detail = book?.detail?.takeIf { it.isNotBlank() }
-            ?: if (book == null) "Tap to open ${source.label}" else ""
         return Model(
             source = source,
             setupNeeded = false,
             hasSession = controller != null,
             playing = controller?.let { Media.isPlaying(it) } ?: false,
             title = book?.title ?: source.label,
-            detail = detail,
+            chapter = book?.chapter,
+            author = book?.author,
+            fallback = if (book == null) "Tap to open ${source.label}" else "",
             art = Store.coverUri(ctx, source.pkg),
         )
     }
 
     private fun fill(ctx: Context, rv: RemoteViews, m: Model, kind: Kind): RemoteViews {
-        // Shared by every layout: cover and play/pause.
-        if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
-        else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
+        // Every layout has play/pause; all but the narrow one have a cover.
+        if (kind != Kind.NARROW) {
+            if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
+            else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
+        }
         rv.setImageViewResource(R.id.play, if (m.playing) R.drawable.ic_pause else R.drawable.ic_play)
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
 
@@ -100,14 +135,14 @@ object WidgetRenderer {
             Kind.SMALL -> {
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
             }
-            Kind.COMPACT -> {
-                setText(rv, m)
+            Kind.NARROW, Kind.COMPACT -> {
+                setText(rv, m, kind)
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
                 rv.setTextViewText(R.id.source, "${m.source.label.uppercase()}  ⇄")
                 rv.setOnClickPendingIntent(R.id.source, broadcast(ctx, AudiobookWidget.ACTION_TOGGLE))
             }
             Kind.LARGE -> {
-                setText(rv, m)
+                setText(rv, m, kind)
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
                 rv.setOnClickPendingIntent(R.id.back, control(AudiobookWidget.ACTION_BACK))
                 rv.setOnClickPendingIntent(R.id.fwd, control(AudiobookWidget.ACTION_FWD))
@@ -130,10 +165,19 @@ object WidgetRenderer {
         return rv
     }
 
-    private fun setText(rv: RemoteViews, m: Model) {
+    /**
+     * Title always. Second line: the chapter first (it's what changes as you listen),
+     * then the author if there's room. The narrow layout shows only one of the two.
+     */
+    private fun setText(rv: RemoteViews, m: Model, kind: Kind) {
+        val detail = when {
+            m.chapter == null && m.author == null -> m.fallback
+            kind == Kind.NARROW -> m.chapter ?: m.author ?: ""
+            else -> listOfNotNull(m.chapter, m.author).joinToString(" · ")
+        }
         rv.setTextViewText(R.id.title, m.title)
-        rv.setTextViewText(R.id.detail, m.detail)
-        rv.setViewVisibility(R.id.detail, if (m.detail.isEmpty()) View.GONE else View.VISIBLE)
+        rv.setTextViewText(R.id.detail, detail)
+        rv.setViewVisibility(R.id.detail, if (detail.isEmpty()) View.GONE else View.VISIBLE)
     }
 
     private fun openApp(ctx: Context, source: Source): PendingIntent? {
