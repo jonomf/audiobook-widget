@@ -3,8 +3,12 @@
 One Android home-screen widget for whatever **Libby** or **Audible** is playing,
 in place of keeping both apps' widgets on the home screen.
 
-- **4×1:** cover, title, author, and play/pause. Tap `LIBBY ⇄` to switch apps.
-- **4×2 or taller:** adds Libby / Audible chips plus skip back and skip forward.
+Resize it and the layout changes to fit:
+- **1×1:** cover with a play/pause button on top.
+- **2×1:** cover and play/pause.
+- **2×2:** big cover with play/pause.
+- **3×1 / 4×1:** cover, title, author, and play/pause. Tap `LIBBY ⇄` to switch apps.
+- **3×2 / 4×2 or bigger:** adds Libby / Audible chips plus skip back and skip forward.
   Skips use each app's own jump length when the app supports it, otherwise 30 seconds.
 - Switches automatically to whichever app starts playing.
 - Remembers the last book in each app, so it still shows after the app closes.
@@ -29,8 +33,9 @@ other apps' media sessions. This app only looks at Libby and Audible.
 ## How it works
 - `MediaListener` is a notification-listener service. It watches Libby's and Audible's
   media sessions and redraws the widget when playback or metadata changes.
-- `WidgetRenderer` builds two layouts, compact and large, and Android picks one by widget size.
-- `Store` keeps the last title, author and cover for each app.
+- `WidgetRenderer` builds one layout per size (see `Kind`), and Android picks the one that fits.
+- `ArtProvider` serves the saved covers to the launcher by URI.
+- `Store` keeps the last title, author and (pre-rounded) cover for each app.
 - To follow another app, add it to `Sources.kt` and to `<queries>` in the manifest.
 
 Every push to `main` builds a new APK release (GitHub Actions).

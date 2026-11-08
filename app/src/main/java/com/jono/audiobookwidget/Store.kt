@@ -2,12 +2,18 @@ package com.jono.audiobookwidget
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Shader
 import android.media.MediaMetadata
 import android.media.session.MediaController
+import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Remembers the last book seen in each app (title, author, cover), so the
@@ -55,16 +61,16 @@ object Store {
                 edit.putString("title_$pkg", book)
                     .putString("detail_$pkg", listOfNotNull(author, chapter).joinToString(" · "))
 
-                if (p.getString("art_key_$pkg", null) != book) {
+                if (p.getString("cover_key_$pkg", null) != book) {
                     val bmp = md.getBitmap(MediaMetadata.METADATA_KEY_ART)
                         ?: md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
                         ?: md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
                     if (bmp != null) {
                         saveArt(ctx, pkg, bmp)
-                        edit.putString("art_key_$pkg", book)
+                        edit.putString("cover_key_$pkg", book)
                     } else {
                         // New book, cover not sent yet: drop the old cover and retry next update.
-                        artFile(ctx, pkg).delete()
+                        coverFile(ctx, pkg).delete()
                     }
                 }
             }
@@ -74,33 +80,38 @@ object Store {
 
         return listOf(
             pkg, playing, p.getString("title_$pkg", ""), p.getString("detail_$pkg", ""),
-            p.getString("art_key_$pkg", ""), p.getString("selected", ""),
+            p.getString("cover_key_$pkg", ""), p.getString("selected", ""),
         ).joinToString("|")
     }
 
-    fun loadArt(ctx: Context, pkg: String): Bitmap? {
-        val f = artFile(ctx, pkg)
-        return if (f.exists()) BitmapFactory.decodeFile(f.path) else null
+    /** Content URI for the cover; the version changes whenever the image does, so the launcher reloads it. */
+    fun coverUri(ctx: Context, pkg: String): Uri? {
+        val f = coverFile(ctx, pkg)
+        if (!f.exists()) return null
+        return Uri.parse("content://${ctx.packageName}.art/$pkg/${f.lastModified()}")
     }
 
-    private fun artFile(ctx: Context, pkg: String) = File(ctx.filesDir, "art_$pkg.png")
+    fun coverFile(ctx: Context, pkg: String) = File(ctx.filesDir, "cover_$pkg.png")
 
+    /** Square-crops, scales and rounds the cover once, when it arrives. */
     private fun saveArt(ctx: Context, pkg: String, src: Bitmap) {
-        // Widget updates travel over a size-limited channel, so keep covers small (~60dp on screen).
-        val maxSide = 200f
-        val scale = maxSide / max(src.width, src.height)
-        val bmp = if (scale < 1f) {
-            Bitmap.createScaledBitmap(
-                src,
-                (src.width * scale).toInt().coerceAtLeast(1),
-                (src.height * scale).toInt().coerceAtLeast(1),
-                true,
-            )
-        } else src
+        val side = min(src.width, src.height)
+        val outSide = min(side, 400)
+        val scale = outSide.toFloat() / side
+        val out = Bitmap.createBitmap(outSide, outSide, Bitmap.Config.ARGB_8888)
+        val shader = BitmapShader(src, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
+            setLocalMatrix(Matrix().apply {
+                setTranslate(-(src.width - side) / 2f, -(src.height - side) / 2f)
+                postScale(scale, scale)
+            })
+        }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { this.shader = shader }
+        val r = outSide * 0.16f
+        Canvas(out).drawRoundRect(RectF(0f, 0f, outSide.toFloat(), outSide.toFloat()), r, r, paint)
         try {
-            FileOutputStream(artFile(ctx, pkg)).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            FileOutputStream(coverFile(ctx, pkg)).use { out.compress(Bitmap.CompressFormat.PNG, 100, it) }
         } catch (e: Exception) {
-            artFile(ctx, pkg).delete()
+            coverFile(ctx, pkg).delete()
         }
     }
 

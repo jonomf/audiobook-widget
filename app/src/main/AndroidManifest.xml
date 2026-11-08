@@ -33,6 +33,12 @@
             </intent-filter>
         </service>
 
+        <!-- Lets the launcher load cover images. It only serves the two saved covers. -->
+        <provider
+            android:name=".ArtProvider"
+            android:authorities="com.jono.audiobookwidget.art"
+            android:exported="true" />
+
         <receiver
             android:name=".AudiobookWidget"
             android:exported="false">

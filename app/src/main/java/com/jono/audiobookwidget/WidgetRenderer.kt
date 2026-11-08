@@ -5,20 +5,22 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapShader
-import android.graphics.Canvas
-import android.graphics.Matrix
-import android.graphics.Paint
-import android.graphics.RectF
-import android.graphics.Shader
 import android.net.Uri
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
-import kotlin.math.min
 
 object WidgetRenderer {
+
+    /** Every size the widget can take. Android picks the biggest one that fits the widget's current size. */
+    private enum class Kind(val layout: Int, val minSize: SizeF) {
+        TILE(R.layout.widget_tile, SizeF(40f, 40f)),           // 1×1: cover + play/pause
+        SMALL(R.layout.widget_small, SizeF(100f, 40f)),        // 2×1: cover, play/pause
+        TILE_BIG(R.layout.widget_tile, SizeF(100f, 100f)),     // 2×2: big cover + play/pause
+        COMPACT(R.layout.widget_compact, SizeF(170f, 40f)),    // 3×1, 4×1: cover, title, author, play/pause
+        LARGE(R.layout.widget_large, SizeF(170f, 130f)),       // 3×2, 4×2+: app chips, skip buttons
+    }
 
     private class Model(
         val source: Source,
@@ -27,7 +29,7 @@ object WidgetRenderer {
         val playing: Boolean,
         val title: String,
         val detail: String,
-        val art: Bitmap?,
+        val art: Uri?,
     )
 
     fun renderAll(ctx: Context) {
@@ -37,16 +39,12 @@ object WidgetRenderer {
         mgr.updateAppWidget(ids, build(ctx))
     }
 
-    /** One row when the widget is short (4×1); full controls and app chips when it's taller. */
     private fun build(ctx: Context): RemoteViews {
         val m = model(ctx)
-        val compact = fill(ctx, RemoteViews(ctx.packageName, R.layout.widget_compact), m, large = false)
-        val large = fill(ctx, RemoteViews(ctx.packageName, R.layout.widget_large), m, large = true)
         return RemoteViews(
-            mapOf(
-                SizeF(180f, 40f) to compact,
-                SizeF(180f, 140f) to large,
-            )
+            Kind.values().associate { kind ->
+                kind.minSize to fill(ctx, RemoteViews(ctx.packageName, kind.layout), m, kind)
+            }
         )
     }
 
@@ -66,15 +64,13 @@ object WidgetRenderer {
             playing = controller?.let { Media.isPlaying(it) } ?: false,
             title = book?.title ?: source.label,
             detail = detail,
-            art = Store.loadArt(ctx, source.pkg)?.let { rounded(it) },
+            art = Store.coverUri(ctx, source.pkg),
         )
     }
 
-    private fun fill(ctx: Context, rv: RemoteViews, m: Model, large: Boolean): RemoteViews {
-        rv.setTextViewText(R.id.title, m.title)
-        rv.setTextViewText(R.id.detail, m.detail)
-        rv.setViewVisibility(R.id.detail, if (m.detail.isEmpty()) View.GONE else View.VISIBLE)
-        if (m.art != null) rv.setImageViewBitmap(R.id.art, m.art)
+    private fun fill(ctx: Context, rv: RemoteViews, m: Model, kind: Kind): RemoteViews {
+        // Shared by every layout: cover and play/pause.
+        if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
         else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
         rv.setImageViewResource(R.id.play, if (m.playing) R.drawable.ic_pause else R.drawable.ic_play)
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
@@ -88,32 +84,56 @@ object WidgetRenderer {
             m.hasSession -> broadcast(ctx, action)
             else -> open
         }
-
-        rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
         rv.setOnClickPendingIntent(R.id.play, control(AudiobookWidget.ACTION_PLAY_PAUSE))
 
-        if (large) {
-            rv.setOnClickPendingIntent(R.id.back, control(AudiobookWidget.ACTION_BACK))
-            rv.setOnClickPendingIntent(R.id.fwd, control(AudiobookWidget.ACTION_FWD))
+        when (kind) {
+            Kind.TILE, Kind.TILE_BIG -> {
+                // Tapping the cover around the button opens the app.
+                rv.setOnClickPendingIntent(R.id.art, if (m.setupNeeded) setup else open)
+                val buttonDp = if (kind == Kind.TILE) 40f else 56f
+                rv.setViewLayoutWidth(R.id.play, buttonDp, TypedValue.COMPLEX_UNIT_DIP)
+                rv.setViewLayoutHeight(R.id.play, buttonDp, TypedValue.COMPLEX_UNIT_DIP)
+                val padDp = buttonDp * 0.25f
+                val pad = (padDp * ctx.resources.displayMetrics.density).toInt()
+                rv.setViewPadding(R.id.play, pad, pad, pad, pad)
+            }
+            Kind.SMALL -> {
+                rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
+            }
+            Kind.COMPACT -> {
+                setText(rv, m)
+                rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
+                rv.setTextViewText(R.id.source, "${m.source.label.uppercase()}  ⇄")
+                rv.setOnClickPendingIntent(R.id.source, broadcast(ctx, AudiobookWidget.ACTION_TOGGLE))
+            }
+            Kind.LARGE -> {
+                setText(rv, m)
+                rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
+                rv.setOnClickPendingIntent(R.id.back, control(AudiobookWidget.ACTION_BACK))
+                rv.setOnClickPendingIntent(R.id.fwd, control(AudiobookWidget.ACTION_FWD))
 
-            val libby = m.source == Sources.LIBBY
-            rv.setViewVisibility(R.id.chip_libby_on, if (libby) View.VISIBLE else View.GONE)
-            rv.setViewVisibility(R.id.chip_libby_off, if (libby) View.GONE else View.VISIBLE)
-            rv.setViewVisibility(R.id.chip_audible_on, if (libby) View.GONE else View.VISIBLE)
-            rv.setViewVisibility(R.id.chip_audible_off, if (libby) View.VISIBLE else View.GONE)
-            rv.setOnClickPendingIntent(R.id.chip_libby_on, open)
-            rv.setOnClickPendingIntent(R.id.chip_audible_on, open)
-            rv.setOnClickPendingIntent(
-                R.id.chip_libby_off, broadcast(ctx, AudiobookWidget.ACTION_SELECT, Sources.LIBBY.pkg)
-            )
-            rv.setOnClickPendingIntent(
-                R.id.chip_audible_off, broadcast(ctx, AudiobookWidget.ACTION_SELECT, Sources.AUDIBLE.pkg)
-            )
-        } else {
-            rv.setTextViewText(R.id.source, "${m.source.label.uppercase()}  ⇄")
-            rv.setOnClickPendingIntent(R.id.source, broadcast(ctx, AudiobookWidget.ACTION_TOGGLE))
+                val libby = m.source == Sources.LIBBY
+                rv.setViewVisibility(R.id.chip_libby_on, if (libby) View.VISIBLE else View.GONE)
+                rv.setViewVisibility(R.id.chip_libby_off, if (libby) View.GONE else View.VISIBLE)
+                rv.setViewVisibility(R.id.chip_audible_on, if (libby) View.GONE else View.VISIBLE)
+                rv.setViewVisibility(R.id.chip_audible_off, if (libby) View.VISIBLE else View.GONE)
+                rv.setOnClickPendingIntent(R.id.chip_libby_on, open)
+                rv.setOnClickPendingIntent(R.id.chip_audible_on, open)
+                rv.setOnClickPendingIntent(
+                    R.id.chip_libby_off, broadcast(ctx, AudiobookWidget.ACTION_SELECT, Sources.LIBBY.pkg)
+                )
+                rv.setOnClickPendingIntent(
+                    R.id.chip_audible_off, broadcast(ctx, AudiobookWidget.ACTION_SELECT, Sources.AUDIBLE.pkg)
+                )
+            }
         }
         return rv
+    }
+
+    private fun setText(rv: RemoteViews, m: Model) {
+        rv.setTextViewText(R.id.title, m.title)
+        rv.setTextViewText(R.id.detail, m.detail)
+        rv.setViewVisibility(R.id.detail, if (m.detail.isEmpty()) View.GONE else View.VISIBLE)
     }
 
     private fun openApp(ctx: Context, source: Source): PendingIntent? {
@@ -135,20 +155,5 @@ object WidgetRenderer {
         return PendingIntent.getBroadcast(
             ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-    }
-
-    /** Square-crops the cover and rounds its corners. */
-    private fun rounded(src: Bitmap): Bitmap {
-        val size = min(src.width, src.height)
-        val out = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val shader = BitmapShader(src, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
-            setLocalMatrix(Matrix().apply {
-                setTranslate(-(src.width - size) / 2f, -(src.height - size) / 2f)
-            })
-        }
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.shader = shader }
-        val r = size * 0.16f
-        Canvas(out).drawRoundRect(RectF(0f, 0f, size.toFloat(), size.toFloat()), r, r, paint)
-        return out
     }
 }

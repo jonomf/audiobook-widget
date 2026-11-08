@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2×1: cover (tap to open the app) and play/pause. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="6dp"
+    android:paddingTop="4dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="4dp">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical|start"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/art"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="Cover"
+            android:scaleType="fitCenter"
+            android:src="@drawable/art_placeholder" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/play"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/play_bg"
+        android:contentDescription="Play"
+        android:padding="10dp"
+        android:src="@drawable/ic_play" />
+</LinearLayout>
