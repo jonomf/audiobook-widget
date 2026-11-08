@@ -1,7 +1,6 @@
 package com.jono.audiobookwidget
 
 import android.app.PendingIntent
-import android.app.SearchManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -12,6 +11,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Bundle
 import android.os.SystemClock
 import android.provider.MediaStore
 import android.text.format.DateUtils
@@ -186,13 +186,13 @@ object WidgetRenderer {
         val book = recents.firstOrNull { it.pkg == source.pkg }
         val playingBooks = Media.controllers(ctx, Profile.BOOKS).filter { Media.isPlaying(it) }
             .mapNotNull { pc -> recents.firstOrNull { it.pkg == pc.packageName } }
-        val others = distinctBooks(recents, listOfNotNull(book) + playingBooks).map { b ->
+        val others = distinctBooks(recents, listOfNotNull(book) + playingBooks).mapIndexed { i, b ->
             Item(
                 art = Store.coverUri(ctx, b),
                 title = b.title,
                 sub = listOfNotNull(b.chapter, b.author).joinToString(" · "),
                 pkg = b.pkg,
-                tap = bookTap(ctx, b),
+                tap = bookTap(ctx, b, i),
             )
         }
         val speed = c?.let { Media.speed(it) } ?: 1f
@@ -565,45 +565,59 @@ object WidgetRenderer {
 
     // ---------------------------------------------------------------- taps
 
-    /** Another app's current book: switch the widget to it. An older book: open its app. */
-    private fun bookTap(ctx: Context, b: Store.Book): PendingIntent {
-        val setup = activity(ctx, 1, Intent(ctx, MainActivity::class.java))
-        if (Store.current(ctx, b.pkg)?.key == b.key) return broadcast(ctx, Profile.BOOKS, MediaWidget.ACTION_SELECT, b.pkg)
-        val source = Sources.byPkg(b.pkg) ?: return setup
-        return openApp(ctx, source) ?: setup
+    /**
+     * Tapping a recent item plays it in its app, without opening the app (see Player / PlayActivity).
+     * Each slot has its own request code so its PendingIntent keeps its own item.
+     */
+    private fun playTap(
+        ctx: Context, code: Int, pkg: String, resume: Boolean, mediaId: String?, query: String, search: Bundle,
+    ): PendingIntent {
+        val intent = Intent(ctx, PlayActivity::class.java)
+            .putExtra(PlayActivity.EXTRA_PKG, pkg)
+            .putExtra(PlayActivity.EXTRA_RESUME, resume)
+            .putExtra(PlayActivity.EXTRA_MEDIA_ID, mediaId)
+            .putExtra(PlayActivity.EXTRA_QUERY, query)
+            .putExtra(PlayActivity.EXTRA_SEARCH, search)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        return activity(ctx, code, intent)
     }
 
-    /** Asks YouTube Music to find and play that album or mix; opens the app if it won't take the request. */
-    private fun groupTap(ctx: Context, g: MusicStore.Group, index: Int): PendingIntent {
-        val fallback = openApp(ctx, Sources.YTMUSIC) ?: activity(ctx, 1, Intent(ctx, MainActivity::class.java))
-        val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
-            .setPackage(Sources.YTMUSIC.pkg)
-            .putExtra(SearchManager.QUERY, listOfNotNull(g.title, g.artist).joinToString(" "))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (g.kind == MusicStore.GROUP_MIX) {
-            intent.putExtra(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE)
-            intent.putExtra(MediaStore.EXTRA_MEDIA_PLAYLIST, g.title)
-        } else {
-            intent.putExtra(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)
-            intent.putExtra(MediaStore.EXTRA_MEDIA_ALBUM, g.title)
+    /** A book: resume it if it's what that app last had, otherwise ask the app to play it by id or title. */
+    private fun bookTap(ctx: Context, b: Store.Book, index: Int): PendingIntent {
+        val isAppCurrent = Store.current(ctx, b.pkg)?.key == b.key
+        val search = Bundle().apply {
+            putString(MediaStore.EXTRA_MEDIA_TITLE, b.title)
+            b.author?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
         }
-        if (g.artist != null) intent.putExtra(MediaStore.EXTRA_MEDIA_ARTIST, g.artist)
-        if (ctx.packageManager.resolveActivity(intent, 0) == null) return fallback
-        return activity(ctx, 30 + index, intent)
+        val query = listOfNotNull(b.title, b.author).joinToString(" ")
+        return playTap(ctx, 300 + index, b.pkg, isAppCurrent, b.mediaId, query, search)
     }
 
-    /** Asks YouTube Music to find and play that song; opens the app if it won't take the request. */
+    /** An album or mix: ask YouTube Music to find and play it. */
+    private fun groupTap(ctx: Context, g: MusicStore.Group, index: Int): PendingIntent {
+        val search = Bundle().apply {
+            if (g.kind == MusicStore.GROUP_MIX) {
+                putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE)
+                putString(MediaStore.EXTRA_MEDIA_PLAYLIST, g.title)
+            } else {
+                putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)
+                putString(MediaStore.EXTRA_MEDIA_ALBUM, g.title)
+            }
+            g.artist?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
+        }
+        val query = listOfNotNull(g.title, g.artist).joinToString(" ")
+        return playTap(ctx, 100 + index, Sources.YTMUSIC.pkg, false, null, query, search)
+    }
+
+    /** A song: ask YouTube Music to find and play it. */
     private fun songTap(ctx: Context, s: MusicStore.Song, index: Int): PendingIntent {
-        val fallback = openApp(ctx, Sources.YTMUSIC) ?: activity(ctx, 1, Intent(ctx, MainActivity::class.java))
-        val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
-            .setPackage(Sources.YTMUSIC.pkg)
-            .putExtra(SearchManager.QUERY, listOfNotNull(s.title, s.artist).joinToString(" "))
-            .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
-            .putExtra(MediaStore.EXTRA_MEDIA_TITLE, s.title)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (s.artist != null) intent.putExtra(MediaStore.EXTRA_MEDIA_ARTIST, s.artist)
-        if (ctx.packageManager.resolveActivity(intent, 0) == null) return fallback
-        return activity(ctx, 20 + index, intent)
+        val search = Bundle().apply {
+            putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
+            putString(MediaStore.EXTRA_MEDIA_TITLE, s.title)
+            s.artist?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
+        }
+        val query = listOfNotNull(s.title, s.artist).joinToString(" ")
+        return playTap(ctx, 200 + index, Sources.YTMUSIC.pkg, false, null, query, search)
     }
 
     // ---------------------------------------------------------------- the app's own buttons

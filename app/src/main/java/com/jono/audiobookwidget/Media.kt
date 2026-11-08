@@ -3,11 +3,13 @@ package com.jono.audiobookwidget
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.SystemClock
+import android.service.media.MediaBrowserService
 
 /** Finds and drives the followed apps' media sessions. */
 object Media {
@@ -30,6 +32,12 @@ object Media {
     } catch (e: SecurityException) {
         emptyList()
     }
+
+    /** The app's media browser service (what Android Auto and Assistant connect to), if it has one. */
+    fun browserService(ctx: Context, pkg: String): ComponentName? =
+        ctx.packageManager
+            .queryIntentServices(Intent(MediaBrowserService.SERVICE_INTERFACE).setPackage(pkg), 0)
+            .firstOrNull()?.serviceInfo?.let { ComponentName(it.packageName, it.name) }
 
     fun controllerFor(ctx: Context, pkg: String): MediaController? =
         controllers(ctx).firstOrNull { it.packageName == pkg }

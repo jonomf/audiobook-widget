@@ -37,6 +37,8 @@ object Store {
         val chapter: String?,
         val author: String?,
         val lastPlayed: Long,
+        /** The app's own id for the book, if it reports one; lets the widget ask the app to play it. */
+        val mediaId: String? = null,
     )
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("state", Context.MODE_PRIVATE)
@@ -63,6 +65,7 @@ object Store {
                     chapter = o.optString("chapter").takeIf { it.isNotBlank() },
                     author = o.optString("author").takeIf { it.isNotBlank() },
                     lastPlayed = o.optLong("lastPlayed"),
+                    mediaId = o.optString("mediaId").takeIf { it.isNotBlank() },
                 )
             }
         } catch (e: Exception) {
@@ -108,6 +111,7 @@ object Store {
                     chapter = chapter ?: old?.chapter,
                     author = author ?: old?.author,
                     lastPlayed = if (playing || isNew) System.currentTimeMillis() else old!!.lastPlayed,
+                    mediaId = md.text(MediaMetadata.METADATA_KEY_MEDIA_ID) ?: old?.mediaId,
                 )
                 list.add(book)
                 list.sortByDescending { it.lastPlayed }
@@ -155,11 +159,11 @@ object Store {
      * Adds an app's last-played book reported while the app isn't playing (see RecentFetcher).
      * Only fills a gap: skipped if the app already has a book in the list. Sorted as oldest.
      */
-    fun addRecovered(ctx: Context, pkg: String, title: String, author: String?, art: Bitmap?) {
+    fun addRecovered(ctx: Context, pkg: String, title: String, author: String?, art: Bitmap?, mediaId: String? = null) {
         if (current(ctx, pkg) != null) return
         val key = "$pkg|$title"
         val list = recents(ctx).toMutableList()
-        list.add(Book(key, pkg, title, null, author, RECOVERED))
+        list.add(Book(key, pkg, title, null, author, RECOVERED, mediaId))
         list.sortByDescending { it.lastPlayed }
         saveRecents(ctx, list.take(MAX_RECENTS))
         if (art != null && !coverFile(ctx, coverId(key)).exists()) saveArt(coverFile(ctx, coverId(key)), art)
@@ -211,6 +215,7 @@ object Store {
                 put("chapter", b.chapter ?: "")
                 put("author", b.author ?: "")
                 put("lastPlayed", b.lastPlayed)
+                put("mediaId", b.mediaId ?: "")
             })
         }
         prefs(ctx).edit().putString("recents", arr.toString()).apply()

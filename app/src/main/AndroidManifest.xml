@@ -44,6 +44,15 @@
             android:taskAffinity=""
             android:theme="@style/Panel" />
 
+        <!-- Tapping a recent item: invisible, asks the app to play it, closes. Opens the app only as a fallback. -->
+        <activity
+            android:name=".PlayActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Invisible" />
+
         <!-- Notification access is what lets an app see and control other apps' media sessions. -->
         <service
             android:name=".MediaListener"

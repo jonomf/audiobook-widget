@@ -32,9 +32,7 @@ object RecentFetcher {
     }
 
     private fun fetch(ctx: Context, pkg: String, onDone: (Boolean) -> Unit) {
-        val service = ctx.packageManager
-            .queryIntentServices(Intent(MediaBrowserService.SERVICE_INTERFACE).setPackage(pkg), 0)
-            .firstOrNull()?.serviceInfo
+        val service = Media.browserService(ctx, pkg)
         if (service == null) {
             onDone(false)
             return
@@ -57,7 +55,7 @@ object RecentFetcher {
 
         handler.postDelayed({ finish(false) }, TIMEOUT_MS)
         val hints = Bundle().apply { putBoolean(MediaBrowserService.BrowserRoot.EXTRA_RECENT, true) }
-        val b0 = MediaBrowser(ctx, ComponentName(service.packageName, service.name), object : MediaBrowser.ConnectionCallback() {
+        val b0 = MediaBrowser(ctx, service, object : MediaBrowser.ConnectionCallback() {
             override fun onConnected() {
                 val b = browser ?: return finish(false)
                 try {
@@ -88,7 +86,7 @@ object RecentFetcher {
     private fun add(ctx: Context, pkg: String, d: MediaDescription): Boolean {
         val title = d.title?.toString()?.takeIf { it.isNotBlank() } ?: return false
         val author = d.subtitle?.toString()?.takeIf { it.isNotBlank() }
-        Store.addRecovered(ctx, pkg, title, author, art(ctx, d))
+        Store.addRecovered(ctx, pkg, title, author, art(ctx, d), d.mediaId)
         return true
     }
 
