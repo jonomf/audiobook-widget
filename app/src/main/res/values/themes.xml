@@ -1,28 +1,193 @@
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.DayNight" />
 
-    <!-- App icon next to the title (or below a tile's cover). Tap to switch apps. -->
+    <!-- Expand panel: floats over the home screen; the widget's XL layout is drawn inside it. -->
+    <style name="Panel" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.45</item>
+    </style>
+
+    <!-- Cover: square, as big as its box allows (sized by height unless the layout says otherwise). -->
+    <style name="Cover">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:src">@drawable/art_placeholder</item>
+        <item name="android:contentDescription">Cover</item>
+    </style>
+
+    <!-- Play/pause sitting on the cover's corner (small sizes). -->
+    <style name="PlayOverlay">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_gravity">bottom|end</item>
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:background">@drawable/play_bg</item>
+        <item name="android:padding">7dp</item>
+        <item name="android:src">@drawable/ic_play</item>
+        <item name="android:contentDescription">Play</item>
+    </style>
+
+    <style name="PlayBig">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:background">@drawable/play_bg</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:src">@drawable/ic_play</item>
+        <item name="android:contentDescription">Play</item>
+    </style>
+
+    <style name="Ctl">
+        <item name="android:layout_width">38dp</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="SpeedChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:background">@drawable/chip_on</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingBottom">3dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/btn_text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:text">1×</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <!-- App icon just before the title. Tap to switch apps. -->
     <style name="Badge">
+        <item name="android:layout_width">18dp</item>
+        <item name="android:layout_height">18dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:padding">1dp</item>
         <item name="android:contentDescription">App</item>
         <item name="android:visibility">gone</item>
     </style>
 
-    <style name="SwitchIcon">
-        <item name="android:layout_width">36dp</item>
-        <item name="android:layout_height">36dp</item>
-        <item name="android:padding">6dp</item>
+    <style name="Title">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:text">Libby</item>
+    </style>
+
+    <style name="Chapter">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:alpha">0.85</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:visibility">gone</item>
     </style>
 
-    <style name="UpdateDot">
-        <item name="android:layout_width">18dp</item>
-        <item name="android:layout_height">18dp</item>
-        <item name="android:layout_gravity">top|end</item>
-        <item name="android:layout_margin">3dp</item>
-        <item name="android:padding">3dp</item>
-        <item name="android:background">@drawable/update_bg</item>
-        <item name="android:src">@drawable/ic_download</item>
-        <item name="android:contentDescription">Update available</item>
+    <style name="Author">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_subtext</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="TimeLeft">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">1dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/accent_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="SectionLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:textColor">@color/widget_subtext</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="SwitchIcon">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:padding">5dp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <!-- Recent books: covers in long strips, rows in tall/large sizes. -->
+    <style name="RecentThumb">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:src">@drawable/art_placeholder</item>
+        <item name="android:contentDescription">Recent book</item>
+    </style>
+
+    <style name="RecentRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="RecentRowArt">
+        <item name="android:layout_width">36dp</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:src">@drawable/art_placeholder</item>
+        <item name="android:contentDescription">Recent book</item>
+    </style>
+
+    <style name="RecentIcon">
+        <item name="android:layout_width">14dp</item>
+        <item name="android:layout_height">14dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:contentDescription">App</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="RecentTitle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="RecentSub">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_subtext</item>
+        <item name="android:textSize">11sp</item>
     </style>
 </resources>

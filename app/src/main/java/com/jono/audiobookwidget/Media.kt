@@ -35,6 +35,41 @@ object Media {
         return s == PlaybackState.STATE_PLAYING || s == PlaybackState.STATE_BUFFERING
     }
 
+    fun actions(c: MediaController): Long = c.playbackState?.actions ?: 0L
+
+    fun supports(c: MediaController, action: Long) = (actions(c) and action) != 0L
+
+    /** Playback speed; paused sessions often report 0, so treat that as 1×. */
+    fun speed(c: MediaController): Float = c.playbackState?.playbackSpeed?.takeIf { it > 0f } ?: 1f
+
+    /**
+     * Real (wall-clock) time left in what the app reports as the current item, at the current
+     * speed, or null if the app doesn't report a duration. Used for a live countdown.
+     */
+    fun remainingMs(c: MediaController): Long? {
+        val st = c.playbackState ?: return null
+        val duration = c.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+        if (duration <= 0L) return null
+        var pos = st.position
+        if (st.state == PlaybackState.STATE_PLAYING) {
+            pos += ((SystemClock.elapsedRealtime() - st.lastPositionUpdateTime) * st.playbackSpeed).toLong()
+        }
+        if (pos < 0L || pos > duration) return null
+        return ((duration - pos) / speed(c)).toLong()
+    }
+
+    /** 1× → 1.25× → 1.5× → 1.75× → 2× → 1×. */
+    fun cycleSpeed(c: MediaController) {
+        val speeds = floatArrayOf(1f, 1.25f, 1.5f, 1.75f, 2f)
+        val current = speed(c)
+        val next = speeds.firstOrNull { it > current + 0.01f } ?: speeds[0]
+        c.transportControls.setPlaybackSpeed(next)
+    }
+
+    fun chapter(c: MediaController, forward: Boolean) {
+        if (forward) c.transportControls.skipToNext() else c.transportControls.skipToPrevious()
+    }
+
     fun togglePlay(c: MediaController) {
         if (isPlaying(c)) c.transportControls.pause() else c.transportControls.play()
     }

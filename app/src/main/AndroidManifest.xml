@@ -28,6 +28,15 @@
         </activity>
 
 
+        <!-- Expand panel: floats over the home screen when you tap a small widget. -->
+        <activity
+            android:name=".PanelActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Panel" />
+
         <!-- Notification access is what lets an app see and control other apps' media sessions. -->
         <service
             android:name=".MediaListener"

@@ -1,51 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 1×1 and square sizes: cover with play/pause on it, app icon below the cover's corner. -->
+<!-- 1×1: cover as big as it gets, play/pause in the corner; tap the cover to expand. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_bg">
+    android:background="@drawable/widget_bg"
+    android:padding="4dp">
 
     <FrameLayout
-        android:id="@+id/body"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:padding="4dp">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginBottom="16dp">
-
-            <ImageView
-                android:id="@+id/art"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Cover"
-                android:scaleType="fitCenter"
-                android:src="@drawable/art_placeholder" />
-
-            <ImageView
-                android:id="@+id/play"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-            android:layout_gravity="center"
-                android:background="@drawable/play_bg"
-                android:contentDescription="Play"
-                android:padding="10dp"
-                android:src="@drawable/ic_play" />
-        </FrameLayout>
+        android:layout_gravity="center">
 
         <ImageView
-            android:id="@+id/badge"
-            style="@style/Badge"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="bottom|end" />
+            android:id="@+id/art"
+            style="@style/Cover" />
+        <ImageView
+            android:id="@+id/play"
+            style="@style/PlayOverlay" />
     </FrameLayout>
-
-    <!-- Shown when a newer build is on GitHub; tap to update. -->
-    <ImageView
-        android:id="@+id/update"
-        style="@style/UpdateDot" />
 </FrameLayout>
