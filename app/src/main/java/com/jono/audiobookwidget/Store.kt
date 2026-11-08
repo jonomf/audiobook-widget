@@ -26,6 +26,9 @@ import kotlin.math.min
 object Store {
     private const val MAX_RECENTS = 8
 
+    /** lastPlayed marker for books fetched while their app wasn't running. */
+    private const val RECOVERED = 1L
+
     /** One book. [key] is app + title; the first entry per app is that app's current book. */
     data class Book(
         val key: String,
@@ -94,6 +97,9 @@ object Store {
                 val list = recents(ctx).toMutableList()
                 val old = list.firstOrNull { it.key == key }
                 list.removeAll { it.key == key }
+                // A placeholder fetched while the app was closed (RecentFetcher) may describe this same
+                // book differently; now that the app reports it for real, drop the placeholder.
+                list.removeAll { it.pkg == pkg && it.lastPlayed == RECOVERED }
                 val isNew = old == null
                 val book = Book(
                     key = key,
@@ -153,7 +159,7 @@ object Store {
         if (current(ctx, pkg) != null) return
         val key = "$pkg|$title"
         val list = recents(ctx).toMutableList()
-        list.add(Book(key, pkg, title, null, author, 1L))
+        list.add(Book(key, pkg, title, null, author, RECOVERED))
         list.sortByDescending { it.lastPlayed }
         saveRecents(ctx, list.take(MAX_RECENTS))
         if (art != null && !coverFile(ctx, coverId(key)).exists()) saveArt(coverFile(ctx, coverId(key)), art)

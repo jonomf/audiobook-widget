@@ -156,21 +156,32 @@ object WidgetRenderer {
                 Media.supports(it, PlaybackState.ACTION_SKIP_TO_NEXT) ||
                     Media.supports(it, PlaybackState.ACTION_SKIP_TO_PREVIOUS)
             } ?: false,
-            recents = distinctRecents(recents, book),
+            recents = distinctRecents(recents, listOfNotNull(book) + playingBooks(ctx, recents)),
             bookmarks = book?.let { Bookmarks.forBook(ctx, it.key) }.orEmpty(),
         )
     }
 
     /**
-     * Recent books with no repeats: the book in the main spot is never listed again, and a book
-     * that shows up twice (e.g. under both apps, or reported slightly differently) appears once.
+     * Recent books with no repeats, and nothing that's in the main spot or playing right now.
+     * Matching is by normalized title, and also catches the same book reported differently
+     * (one title containing the other, or a recent entry named after the playing chapter).
      */
-    private fun distinctRecents(all: List<Store.Book>, main: Store.Book?): List<Store.Book> {
-        fun norm(t: String) = t.lowercase().filter { it.isLetterOrDigit() }
+    private fun distinctRecents(all: List<Store.Book>, current: List<Store.Book>): List<Store.Book> {
+        fun norm(t: String?) = t.orEmpty().lowercase().filter { it.isLetterOrDigit() }
+        val excluded = current.flatMap { listOf(norm(it.title), norm(it.chapter)) }.filter { it.isNotEmpty() }
+        fun isCurrent(b: Store.Book): Boolean {
+            val t = norm(b.title)
+            if (b.key in current.map { it.key }) return true
+            return excluded.any { e -> t == e || (t.length >= 6 && e.length >= 6 && (t in e || e in t)) }
+        }
         val seen = mutableSetOf<String>()
-        main?.let { seen.add(norm(it.title)) }
-        return all.filter { it.key != main?.key && seen.add(norm(it.title)) }
+        return all.filter { !isCurrent(it) && seen.add(norm(it.title)) }
     }
+
+    /** Books playing in any app right now (normally just one). */
+    private fun playingBooks(ctx: Context, recents: List<Store.Book>): List<Store.Book> =
+        Media.controllers(ctx).filter { Media.isPlaying(it) }
+            .mapNotNull { c -> recents.firstOrNull { it.pkg == c.packageName } }
 
     private fun fill(ctx: Context, rv: RemoteViews, m: Model, kind: Kind): RemoteViews {
         val setup = activity(ctx, 1, Intent(ctx, MainActivity::class.java))
