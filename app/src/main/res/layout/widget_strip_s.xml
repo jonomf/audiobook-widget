@@ -51,6 +51,9 @@
             style="@style/Chapter"
             android:maxLines="1" />
 
+        <Chronometer
+            android:id="@+id/time"
+            style="@style/TimeLeft" />
         <TextView
             android:id="@+id/author"
             style="@style/Author" />

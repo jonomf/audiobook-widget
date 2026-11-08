@@ -41,7 +41,7 @@ object WidgetRenderer {
         val expands: Boolean = true,
     ) {
         TILE(R.layout.widget_tile, SizeF(50f, 50f), "cover", text = false),
-        STRIP_S(R.layout.widget_strip_s, SizeF(150f, 50f), "cover, title, chapter, author"),
+        STRIP_S(R.layout.widget_strip_s, SizeF(150f, 50f), "cover, title, chapter, time left, author", time = true),
         STRIP(R.layout.widget_strip, SizeF(220f, 50f), "cover, text, time left", time = true),
         STRIP_L(R.layout.widget_strip_l, SizeF(320f, 50f), "cover, text, time left, recent covers",
             time = true, recentSlots = 3),
