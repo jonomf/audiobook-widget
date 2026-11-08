@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 4×3+ and the expand panel: big cover, all text, every control, app switcher, recent books. -->
+<!-- 4x3+ and the expand panel: everything. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -49,17 +49,39 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/chapter"
+                android:id="@+id/line2"
                 style="@style/Chapter"
                 android:maxLines="2" />
 
-            <Chronometer
-                android:id="@+id/time"
-                style="@style/TimeLeft" />
             <TextView
-                android:id="@+id/author"
+                android:id="@+id/line3"
                 style="@style/Author" />
         </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/up_next"
+        style="@style/UpNext" />
+
+    <LinearLayout
+        android:id="@+id/time_row"
+        style="@style/TimeRow">
+
+        <Chronometer
+            android:id="@+id/time"
+            style="@style/TimeText" />
+
+        <TextView
+            android:id="@+id/time_static"
+            style="@style/TimeText" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="@style/ProgressLine" />
+
+        <TextView
+            android:id="@+id/duration"
+            style="@style/TimeText" />
     </LinearLayout>
 
     <LinearLayout
@@ -72,8 +94,8 @@
         <ImageView
             android:id="@+id/prev"
             style="@style/Ctl"
-            android:contentDescription="Previous chapter"
-            android:src="@drawable/ic_skip_prev" />
+            android:contentDescription="Previous"
+            android:src="@drawable/ic_prev" />
         <ImageView
             android:id="@+id/back"
             style="@style/Ctl"
@@ -90,14 +112,25 @@
         <ImageView
             android:id="@+id/next"
             style="@style/Ctl"
-            android:contentDescription="Next chapter"
-            android:src="@drawable/ic_skip_next" />
+            android:contentDescription="Next"
+            android:src="@drawable/ic_next" />
+        <ImageView
+            android:id="@+id/action1"
+            style="@style/ActionSlot" />
+        <ImageView
+            android:id="@+id/action2"
+            style="@style/ActionSlot" />
+        <ImageView
+            android:id="@+id/action3"
+            style="@style/ActionSlot" />
+        <ImageView
+            android:id="@+id/action4"
+            style="@style/ActionSlot" />
         <ImageView
             android:id="@+id/bookmark"
             style="@style/Ctl"
             android:contentDescription="Bookmark"
             android:src="@drawable/ic_bookmark" />
-
         <TextView
             android:id="@+id/speed"
             style="@style/SpeedChip" />
@@ -189,15 +222,13 @@
             android:text="Recent" />
 
         <ImageView
-            android:id="@+id/switch_libby"
-            style="@style/SwitchIcon"
-            android:contentDescription="Libby" />
+            android:id="@+id/switch1"
+            style="@style/SwitchIcon" />
 
         <ImageView
-            android:id="@+id/switch_audible"
+            android:id="@+id/switch2"
             style="@style/SwitchIcon"
-            android:layout_marginStart="4dp"
-            android:contentDescription="Audible" />
+            android:layout_marginStart="4dp" />
     </LinearLayout>
 
     <LinearLayout

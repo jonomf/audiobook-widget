@@ -176,7 +176,7 @@ object Store {
         val existing = p.getString("recents", null)?.let { JSONArray(it) } ?: JSONArray()
         val keys = (0 until existing.length()).map { existing.getJSONObject(it).optString("key") }.toSet()
         val edit = p.edit()
-        for (src in Sources.all) {
+        for (src in Profile.BOOKS.sources) {
             val title = p.getString("title_${src.pkg}", null)?.takeIf { it.isNotBlank() } ?: continue
             val key = "${src.pkg}|$title"
             val chapter = p.getString("chapter_${src.pkg}", null)?.takeIf { it.isNotBlank() }

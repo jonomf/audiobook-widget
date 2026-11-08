@@ -5,6 +5,7 @@
     <queries>
         <package android:name="com.overdrive.mobile.android.libby" />
         <package android:name="com.audible.application" />
+        <package android:name="com.google.android.apps.youtube.music" />
         <!-- The Widget Updater, which checks for new builds and installs them. -->
         <package android:name="com.jono.widgetupdater" />
         <!-- Their media browser services, used to ask for the last-played book. -->
@@ -71,15 +72,30 @@
             <meta-data android:name="com.jono.widgets.asset" android:value="audiobook-widget.apk" />
         </receiver>
 
+        <!-- Audiobooks widget (Libby + Audible). -->
         <receiver
             android:name=".AudiobookWidget"
-            android:exported="false">
+            android:exported="false"
+            android:label="@string/widget_books">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- Music widget (YouTube Music). Same widget, music content and controls. -->
+        <receiver
+            android:name=".MusicWidget"
+            android:exported="false"
+            android:label="@string/widget_music">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_music" />
         </receiver>
     </application>
 </manifest>

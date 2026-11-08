@@ -48,8 +48,9 @@ class MainActivity : Activity() {
             setTypeface(typeface, Typeface.BOLD)
         })
         col.addView(TextView(this).apply {
-            text = "One home-screen widget for whatever Libby or Audible is playing. " +
-                "It switches to whichever app starts playing; tap the app icon to switch by hand."
+            text = "Two home-screen widgets that work the same way: Audiobooks (Libby and Audible) and " +
+                "Music (YouTube Music). Their full panels have the controls for that kind of media. " +
+                "Audiobooks switches to whichever app starts playing; tap the app icon to switch by hand."
             textSize = 15f
             setPadding(0, dp(12), 0, dp(8))
         })
@@ -75,12 +76,16 @@ class MainActivity : Activity() {
         }
         col.addView(accessButton)
         col.addView(Button(this).apply {
-            text = "Add widget to home screen"
-            setOnClickListener { pinWidget() }
+            text = "Add Audiobooks widget"
+            setOnClickListener { pinWidget(AudiobookWidget::class.java, "Audiobooks") }
+        })
+        col.addView(Button(this).apply {
+            text = "Add Music widget"
+            setOnClickListener { pinWidget(MusicWidget::class.java, "Music") }
         })
         col.addView(TextView(this).apply {
             text = "Notification access is how Android lets an app see and control other apps' playback. " +
-                "This app only looks at Libby and Audible, and never reads your notifications.\n\n" +
+                "This app only looks at Libby, Audible and YouTube Music, and never reads your notifications.\n\n" +
                 "If the switch is greyed out (\"Restricted setting\"), that's because this app was " +
                 "installed from a browser. Tap below, then ⋮ (top right) → Allow restricted settings, " +
                 "and come back."
@@ -146,17 +151,20 @@ class MainActivity : Activity() {
     private fun describeAppActions(): String {
         if (!Media.hasAccess(this)) return "Turn on notification access to see this."
         val controllers = Media.controllers(this)
-        if (controllers.isEmpty()) return "Play something in Libby or Audible, then come back here."
+        if (controllers.isEmpty()) return "Play something in Libby, Audible or YouTube Music, then come back here."
         return controllers.joinToString("\n\n") { c ->
             val label = Sources.byPkg(c.packageName)?.label ?: c.packageName
             val names = Media.customActions(c).map { it.name.toString() }
             val list = if (names.isEmpty()) "no extra actions" else names.joinToString(", ")
-            val bookmarks = if (Media.bookmarkAction(c) != null) {
-                "Bookmarks go into $label too."
+            val queue = c.queue?.size ?: 0
+            val detail = if (Profile.of(c.packageName) == Profile.BOOKS) {
+                if (Media.bookmarkAction(c) != null) "Bookmarks go into $label too."
+                else "No bookmark action, so bookmarks are saved in this widget only."
             } else {
-                "No bookmark action, so bookmarks are saved in this widget only."
+                val names2 = MusicStore.queueLog(this).joinToString("\n    ") { it }.ifEmpty { "none yet" }
+                "Queue items shared: $queue\n  Recent queue names (album / mix detection):\n    $names2"
             }
-            "• $label: $list\n  $bookmarks"
+            "• $label: $list\n  $detail"
         }
     }
 
@@ -185,12 +193,12 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun pinWidget() {
+    private fun pinWidget(provider: Class<*>, name: String) {
         val mgr = getSystemService(AppWidgetManager::class.java)
         if (mgr.isRequestPinAppWidgetSupported) {
-            mgr.requestPinAppWidget(ComponentName(this, AudiobookWidget::class.java), null, null)
+            mgr.requestPinAppWidget(ComponentName(this, provider), null, null)
         } else {
-            Toast.makeText(this, "Long-press your home screen → Widgets → Audiobook", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Long-press your home screen → Widgets → Media → $name", Toast.LENGTH_LONG).show()
         }
     }
 

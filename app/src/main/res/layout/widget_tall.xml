@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2×3+: cover, text, controls, then recent books. -->
+<!-- 2x3+: art, text, progress, controls, recent items. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -13,8 +13,8 @@
         style="@style/Cover"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1" />
 
     <LinearLayout
         android:id="@+id/content"
@@ -44,16 +44,38 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/chapter"
+            android:id="@+id/line2"
             style="@style/Chapter"
             android:maxLines="2" />
 
+        <TextView
+            android:id="@+id/line3"
+            style="@style/Author" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/up_next"
+        style="@style/UpNext" />
+
+    <LinearLayout
+        android:id="@+id/time_row"
+        style="@style/TimeRow">
+
         <Chronometer
             android:id="@+id/time"
-            style="@style/TimeLeft" />
+            style="@style/TimeText" />
+
         <TextView
-            android:id="@+id/author"
-            style="@style/Author" />
+            android:id="@+id/time_static"
+            style="@style/TimeText" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="@style/ProgressLine" />
+
+        <TextView
+            android:id="@+id/duration"
+            style="@style/TimeText" />
     </LinearLayout>
 
     <LinearLayout
@@ -63,6 +85,11 @@
         android:gravity="center"
         android:orientation="horizontal">
 
+        <ImageView
+            android:id="@+id/prev"
+            style="@style/Ctl"
+            android:contentDescription="Previous"
+            android:src="@drawable/ic_prev" />
         <ImageView
             android:id="@+id/back"
             style="@style/Ctl"
@@ -77,11 +104,18 @@
             android:contentDescription="Skip forward"
             android:src="@drawable/ic_forward" />
         <ImageView
+            android:id="@+id/next"
+            style="@style/Ctl"
+            android:contentDescription="Next"
+            android:src="@drawable/ic_next" />
+        <ImageView
+            android:id="@+id/action1"
+            style="@style/ActionSlot" />
+        <ImageView
             android:id="@+id/bookmark"
             style="@style/Ctl"
             android:contentDescription="Bookmark"
             android:src="@drawable/ic_bookmark" />
-
         <TextView
             android:id="@+id/speed"
             style="@style/SpeedChip" />

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 3×2 / 4×2: big cover, [icon] title / chapter / author / time left, then every control. -->
+<!-- 3x2 / 4x2: big art, text, up next, progress, every control. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -50,17 +50,39 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/chapter"
+                android:id="@+id/line2"
                 style="@style/Chapter"
                 android:maxLines="2" />
 
-            <Chronometer
-                android:id="@+id/time"
-                style="@style/TimeLeft" />
             <TextView
-                android:id="@+id/author"
+                android:id="@+id/line3"
                 style="@style/Author" />
         </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/up_next"
+        style="@style/UpNext" />
+
+    <LinearLayout
+        android:id="@+id/time_row"
+        style="@style/TimeRow">
+
+        <Chronometer
+            android:id="@+id/time"
+            style="@style/TimeText" />
+
+        <TextView
+            android:id="@+id/time_static"
+            style="@style/TimeText" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="@style/ProgressLine" />
+
+        <TextView
+            android:id="@+id/duration"
+            style="@style/TimeText" />
     </LinearLayout>
 
     <LinearLayout
@@ -73,8 +95,8 @@
         <ImageView
             android:id="@+id/prev"
             style="@style/Ctl"
-            android:contentDescription="Previous chapter"
-            android:src="@drawable/ic_skip_prev" />
+            android:contentDescription="Previous"
+            android:src="@drawable/ic_prev" />
         <ImageView
             android:id="@+id/back"
             style="@style/Ctl"
@@ -91,14 +113,22 @@
         <ImageView
             android:id="@+id/next"
             style="@style/Ctl"
-            android:contentDescription="Next chapter"
-            android:src="@drawable/ic_skip_next" />
+            android:contentDescription="Next"
+            android:src="@drawable/ic_next" />
+        <ImageView
+            android:id="@+id/action1"
+            style="@style/ActionSlot" />
+        <ImageView
+            android:id="@+id/action2"
+            style="@style/ActionSlot" />
+        <ImageView
+            android:id="@+id/action3"
+            style="@style/ActionSlot" />
         <ImageView
             android:id="@+id/bookmark"
             style="@style/Ctl"
             android:contentDescription="Bookmark"
             android:src="@drawable/ic_bookmark" />
-
         <TextView
             android:id="@+id/speed"
             style="@style/SpeedChip" />

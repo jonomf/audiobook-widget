@@ -9,7 +9,7 @@ import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.SystemClock
 
-/** Finds and drives Libby's / Audible's media sessions. */
+/** Finds and drives the followed apps' media sessions. */
 object Media {
     private const val SKIP_MS = 30_000L
 
@@ -19,7 +19,11 @@ object Media {
         ctx.getSystemService(NotificationManager::class.java)
             .isNotificationListenerAccessGranted(listenerComponent(ctx))
 
-    fun controllers(ctx: Context): List<MediaController> = try {
+    /** Live sessions of the apps a profile follows (all known apps if null). */
+    fun controllers(ctx: Context, profile: Profile? = null): List<MediaController> =
+        allControllers(ctx).filter { c -> profile == null || profile.sources.any { it.pkg == c.packageName } }
+
+    private fun allControllers(ctx: Context): List<MediaController> = try {
         ctx.getSystemService(MediaSessionManager::class.java)
             .getActiveSessions(listenerComponent(ctx))
             .filter { Sources.isKnown(it.packageName) }
@@ -30,9 +34,37 @@ object Media {
     fun controllerFor(ctx: Context, pkg: String): MediaController? =
         controllers(ctx).firstOrNull { it.packageName == pkg }
 
-    fun isPlaying(c: MediaController): Boolean {
-        val s = c.playbackState?.state ?: PlaybackState.STATE_NONE
-        return s == PlaybackState.STATE_PLAYING || s == PlaybackState.STATE_BUFFERING
+    fun isPlaying(c: MediaController): Boolean = when (c.playbackState?.state) {
+        PlaybackState.STATE_PLAYING,
+        PlaybackState.STATE_BUFFERING,
+        PlaybackState.STATE_SKIPPING_TO_NEXT,
+        PlaybackState.STATE_SKIPPING_TO_PREVIOUS,
+        PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> true
+        else -> false
+    }
+
+    fun duration(c: MediaController): Long =
+        c.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+
+    /** The clock time the item would have started at; it only moves on a seek or speed change. */
+    fun base(c: MediaController): Long? = positionMs(c)?.let { SystemClock.elapsedRealtime() - (it / speed(c)).toLong() }
+
+    /** Runs one of the extra buttons the app offers (like, dislike, its own bookmark…). */
+    fun runCustom(c: MediaController, action: String) {
+        val custom = customActions(c).firstOrNull { it.action == action } ?: return
+        c.transportControls.sendCustomAction(custom, custom.extras)
+    }
+
+    /** What plays after the current item, if the app shares its queue (next song, next chapter). */
+    fun upNext(c: MediaController): String? {
+        val queue = c.queue ?: return null
+        val active = c.playbackState?.activeQueueItemId ?: return null
+        val index = queue.indexOfFirst { it.queueId == active }
+        if (index < 0) return null
+        val next = queue.getOrNull(index + 1)?.description ?: return null
+        val title = next.title?.toString()?.takeIf { it.isNotBlank() } ?: return null
+        val sub = next.subtitle?.toString()?.takeIf { it.isNotBlank() }
+        return if (sub != null) "$title · ${MusicStore.cleanArtist(sub)}" else title
     }
 
     fun actions(c: MediaController): Long = c.playbackState?.actions ?: 0L

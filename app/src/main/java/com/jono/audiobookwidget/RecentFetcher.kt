@@ -13,7 +13,7 @@ import android.os.Looper
 import android.service.media.MediaBrowserService
 
 /**
- * Asks Libby / Audible for their last-played book even when they aren't running, the same way
+ * Books only. Asks Libby / Audible for their last-played book even when they aren't running, the same way
  * Android's "resume playback" cards do (a media browser connection asking for the recent root).
  * Best effort: an app may refuse callers it doesn't know, in which case nothing changes.
  * Only fills gaps, i.e. apps with no book in the recents list yet.
@@ -25,7 +25,7 @@ object RecentFetcher {
     /** Main thread. Calls [onChange] after any app's book was added. */
     fun fillGaps(ctx: Context, onChange: () -> Unit) {
         val app = ctx.applicationContext
-        for (src in Sources.all) {
+        for (src in Profile.BOOKS.sources) {
             if (Store.current(app, src.pkg) != null || src.pkg in inFlight) continue
             fetch(app, src.pkg) { added -> if (added) onChange() }
         }

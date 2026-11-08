@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2×2: big cover with play/pause, then [icon] title / chapter / author. Tap to expand. -->
+<!-- 2x2: big art with play/pause, then the text. Tap to expand. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -17,6 +17,7 @@
         <ImageView
             android:id="@+id/art"
             style="@style/Cover" />
+
         <ImageView
             android:id="@+id/play"
             style="@style/PlayOverlay" />
@@ -50,12 +51,12 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/chapter"
+            android:id="@+id/line2"
             style="@style/Chapter"
             android:maxLines="1" />
 
         <TextView
-            android:id="@+id/author"
+            android:id="@+id/line3"
             style="@style/Author" />
     </LinearLayout>
 </LinearLayout>

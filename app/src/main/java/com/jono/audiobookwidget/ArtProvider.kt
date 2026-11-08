@@ -11,7 +11,7 @@ import java.io.FileNotFoundException
  * Serves the saved cover images to the launcher by URI. That way covers don't travel
  * inside every widget update (which has a size limit), even with five layouts.
  *
- * URI shape: content://com.jono.audiobookwidget.art/<cover id>/<version>
+ * URI shape: content://com.jono.audiobookwidget.art/<cover id>/<version> (music ids start with "m")
  */
 class ArtProvider : ContentProvider() {
     override fun onCreate() = true
@@ -20,10 +20,11 @@ class ArtProvider : ContentProvider() {
         val id = uri.pathSegments.firstOrNull()
         val ctx = context
         // Cover ids are short hex hashes; anything else (e.g. a path) is refused.
-        if (ctx == null || id == null || !id.matches(Regex("[0-9a-f]{1,40}"))) {
+        if (ctx == null || id == null || !id.matches(Regex("m?[0-9a-f]{1,40}"))) {
             throw FileNotFoundException(uri.toString())
         }
-        val file = Store.coverFile(ctx, id)
+        // "m…" ids are music covers (MusicStore); plain ids are book covers (Store).
+        val file = if (id.startsWith("m")) MusicStore.coverFile(ctx, id.drop(1)) else Store.coverFile(ctx, id)
         if (!file.exists()) throw FileNotFoundException(uri.toString())
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }

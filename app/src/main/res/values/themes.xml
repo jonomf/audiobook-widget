@@ -222,4 +222,51 @@
         <item name="android:textColor">@color/widget_subtext</item>
         <item name="android:textSize">11sp</item>
     </style>
+
+    <!-- Extra buttons the app offers (e.g. YouTube Music's like/dislike), drawn with its own icons. -->
+    <style name="ActionSlot" parent="Ctl">
+        <item name="android:contentDescription">Action</item>
+    </style>
+
+    <!-- Strip "time left" when paused (plain text: a stopped Chronometer can drift on redraw). -->
+    <style name="TimeLeftStatic" parent="TimeLeft" />
+
+    <!-- Big sizes: elapsed · progress bar · length. -->
+    <style name="TimeRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="TimeText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/widget_subtext</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
+    <style name="ProgressLine" parent="@android:style/Widget.Material.ProgressBar.Horizontal">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">3dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:progressDrawable">@drawable/progress</item>
+        <item name="android:minHeight">3dp</item>
+        <item name="android:maxHeight">3dp</item>
+    </style>
+
+    <style name="UpNext">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_subtext</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:visibility">gone</item>
+    </style>
 </resources>
