@@ -51,7 +51,8 @@ other apps' media sessions. This app only looks at Libby and Audible.
 - `WidgetRenderer` builds one layout per size (see `Kind`: what each contains), and Android picks the one that fits.
 - `PanelActivity` is the expand panel; it draws the XL layout with the same code.
 - `ArtProvider` serves the saved covers to the launcher by URI.
-- `Store` keeps recent books across both apps (title, chapter, author, pre-rounded cover).
+- `Store` keeps recent books across all apps (title, chapter, author, pre-rounded cover).
+- `RecentFetcher` asks apps that aren't running for their last-played book (media browser "recent" root), best effort.
 - To follow another app, add it to `Sources.kt` and to `<queries>` in the manifest.
 
 

@@ -5,6 +5,10 @@
     <queries>
         <package android:name="com.overdrive.mobile.android.libby" />
         <package android:name="com.audible.application" />
+        <!-- Their media browser services, used to ask for the last-played book. -->
+        <intent>
+            <action android:name="android.media.browse.MediaBrowserService" />
+        </intent>
     </queries>
 
     <application

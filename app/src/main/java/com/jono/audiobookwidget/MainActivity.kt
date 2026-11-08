@@ -111,6 +111,7 @@ class MainActivity : Activity() {
         accessButton.text = if (granted) "Notification access settings" else "Allow notification access"
         sizes.text = WidgetRenderer.describeSizes(this)
         WidgetRenderer.renderAll(this)
+        if (granted) RecentFetcher.fillGaps(this) { WidgetRenderer.renderAll(this) }
         val build = packageManager.getPackageInfo(packageName, 0).longVersionCode
         updateStatus.text = "You're on build $build. Newer builds are on GitHub; " +
             "download one and open it to install over this version."

@@ -30,6 +30,8 @@ class MediaListener : NotificationListenerService() {
         try {
             msm.addOnActiveSessionsChangedListener(sessionsListener, component, handler)
             track(msm.getActiveSessions(component))
+            // Apps that aren't running: ask them for their last-played book.
+            RecentFetcher.fillGaps(this) { redraw() }
         } catch (e: SecurityException) {
             // Access was revoked between connecting and now.
         }

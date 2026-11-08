@@ -45,8 +45,9 @@ object Store {
         prefs(ctx).edit().putString("selected", pkg).apply()
     }
 
-    /** Most recent first. */
+    /** Most recent first, across all apps. */
     fun recents(ctx: Context): List<Book> {
+        migrateOnce(ctx)
         val raw = prefs(ctx).getString("recents", null) ?: return emptyList()
         return try {
             val arr = JSONArray(raw)
@@ -142,6 +143,56 @@ object Store {
         val f = coverFile(ctx, id)
         if (!f.exists()) return null
         return Uri.parse("content://${ctx.packageName}.art/$id/${f.lastModified()}")
+    }
+
+    /**
+     * Adds an app's last-played book reported while the app isn't playing (see RecentFetcher).
+     * Only fills a gap: skipped if the app already has a book in the list. Sorted as oldest.
+     */
+    fun addRecovered(ctx: Context, pkg: String, title: String, author: String?, art: Bitmap?) {
+        if (current(ctx, pkg) != null) return
+        val key = "$pkg|$title"
+        val list = recents(ctx).toMutableList()
+        list.add(Book(key, pkg, title, null, author, 1L))
+        list.sortByDescending { it.lastPlayed }
+        saveRecents(ctx, list.take(MAX_RECENTS))
+        if (art != null && !coverFile(ctx, coverId(key)).exists()) saveArt(coverFile(ctx, coverId(key)), art)
+    }
+
+    /**
+     * Builds before 9 kept one book per app under separate keys. Carry those into the shared
+     * recents list once, covers included, so nothing is lost on upgrade.
+     */
+    private fun migrateOnce(ctx: Context) {
+        val p = prefs(ctx)
+        if (p.getBoolean("migrated_recents", false)) return
+        p.edit().putBoolean("migrated_recents", true).apply()
+        val existing = p.getString("recents", null)?.let { JSONArray(it) } ?: JSONArray()
+        val keys = (0 until existing.length()).map { existing.getJSONObject(it).optString("key") }.toSet()
+        val edit = p.edit()
+        for (src in Sources.all) {
+            val title = p.getString("title_${src.pkg}", null)?.takeIf { it.isNotBlank() } ?: continue
+            val key = "${src.pkg}|$title"
+            val chapter = p.getString("chapter_${src.pkg}", null)?.takeIf { it.isNotBlank() }
+            val author = p.getString("author_${src.pkg}", null)?.takeIf { it.isNotBlank() }
+            if (key !in keys) {
+                existing.put(JSONObject().apply {
+                    put("key", key)
+                    put("pkg", src.pkg)
+                    put("title", title)
+                    put("chapter", chapter ?: "")
+                    put("author", author ?: "")
+                    put("lastPlayed", 2L)
+                })
+            }
+            val oldCover = File(ctx.filesDir, "cover_${src.pkg}.png")
+            val newCover = coverFile(ctx, coverId(key))
+            if (oldCover.exists() && !newCover.exists()) oldCover.renameTo(newCover)
+            for (k in listOf("title_", "chapter_", "author_", "detail_", "cover_key_", "art_key_", "playing_")) {
+                edit.remove("$k${src.pkg}")
+            }
+        }
+        edit.putString("recents", existing.toString()).apply()
     }
 
     private fun saveRecents(ctx: Context, list: List<Book>) {
