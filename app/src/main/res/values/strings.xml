@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Audiobook</string>
+    <string name="widget_desc">Now playing from Libby or Audible</string>
+</resources>
