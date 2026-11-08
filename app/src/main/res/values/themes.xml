@@ -81,6 +81,18 @@
         <item name="android:visibility">gone</item>
     </style>
 
+    <!-- Update symbol: shown when the Widget Updater reports a newer build. Tap to update. -->
+    <style name="UpdateSymbol">
+        <item name="android:layout_width">16dp</item>
+        <item name="android:layout_height">16dp</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:background">@drawable/update_bg</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:src">@drawable/ic_update</item>
+        <item name="android:contentDescription">Update available</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
     <style name="Title">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>

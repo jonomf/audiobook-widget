@@ -25,6 +25,7 @@ class MainActivity : Activity() {
     private lateinit var sizes: TextView
     private lateinit var appActions: TextView
     private lateinit var updateStatus: TextView
+    private lateinit var updaterButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,8 +58,10 @@ class MainActivity : Activity() {
         col.addView(heading("Updates"))
         updateStatus = TextView(this).apply { textSize = 15f; setPadding(0, 0, 0, dp(8)) }
         col.addView(updateStatus)
+        updaterButton = Button(this).apply { setOnClickListener { openUpdater() } }
+        col.addView(updaterButton)
         col.addView(Button(this).apply {
-            text = "Get the latest build"
+            text = "Get the latest build in the browser"
             setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) }
         })
 
@@ -122,9 +125,21 @@ class MainActivity : Activity() {
         appActions.text = describeAppActions()
         WidgetRenderer.renderAll(this)
         if (granted) RecentFetcher.fillGaps(this) { WidgetRenderer.renderAll(this) }
-        val build = packageManager.getPackageInfo(packageName, 0).longVersionCode
-        updateStatus.text = "You're on build $build. Newer builds are on GitHub; " +
-            "download one and open it to install over this version."
+        val build = UpdateStatus.currentBuild(this)
+        val hasUpdater = UpdateStatus.updaterIntent(this) != null
+        val latest = UpdateStatus.latest(this)
+        updateStatus.text = when {
+            !hasUpdater -> "You're on build $build. Install Widget Updater to get an update symbol on " +
+                "the widget and one-tap updates for all your widgets."
+            latest > build -> "Build $latest is available (you're on $build)."
+            else -> "You're on build $build. Widget Updater keeps this up to date; the widget shows " +
+                "a small ↑ symbol when there's a new build."
+        }
+        updaterButton.text = when {
+            !hasUpdater -> "Get Widget Updater"
+            latest > build -> "Update now"
+            else -> "Open Widget Updater"
+        }
     }
 
     /** Extra actions each playing app offers through Android's media controls, and what that means for bookmarks. */
@@ -143,6 +158,12 @@ class MainActivity : Activity() {
             }
             "• $label: $list\n  $bookmarks"
         }
+    }
+
+    private fun openUpdater() {
+        val intent = UpdateStatus.updaterIntent(this)
+            ?: Intent(Intent.ACTION_VIEW, Uri.parse(UpdateStatus.UPDATER_RELEASES))
+        startActivity(intent)
     }
 
     private fun heading(text: String) = TextView(this).apply {

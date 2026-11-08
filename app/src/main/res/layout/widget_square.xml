@@ -43,6 +43,10 @@
                 android:id="@+id/title"
                 style="@style/Title"
                 android:maxLines="1" />
+
+            <ImageView
+                android:id="@+id/update"
+                style="@style/UpdateSymbol" />
         </LinearLayout>
 
         <TextView

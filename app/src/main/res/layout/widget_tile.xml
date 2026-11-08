@@ -18,5 +18,11 @@
         <ImageView
             android:id="@+id/play"
             style="@style/PlayOverlay" />
+
+        <ImageView
+            android:id="@+id/update"
+            style="@style/UpdateSymbol"
+            android:layout_gravity="top|end"
+            android:layout_margin="4dp" />
     </FrameLayout>
 </FrameLayout>

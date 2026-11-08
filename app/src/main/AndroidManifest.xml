@@ -5,6 +5,8 @@
     <queries>
         <package android:name="com.overdrive.mobile.android.libby" />
         <package android:name="com.audible.application" />
+        <!-- The Widget Updater, which checks for new builds and installs them. -->
+        <package android:name="com.jono.widgetupdater" />
         <!-- Their media browser services, used to ask for the last-played book. -->
         <intent>
             <action android:name="android.media.browse.MediaBrowserService" />
@@ -57,6 +59,17 @@
             android:name=".ArtProvider"
             android:authorities="com.jono.audiobookwidget.art"
             android:exported="true" />
+
+        <!-- Lets the Widget Updater find this app and tell it when a new build is out. -->
+        <receiver
+            android:name=".UpdateStatusReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.jono.widgets.UPDATABLE" />
+            </intent-filter>
+            <meta-data android:name="com.jono.widgets.repo" android:value="jonomf/audiobook-widget" />
+            <meta-data android:name="com.jono.widgets.asset" android:value="audiobook-widget.apk" />
+        </receiver>
 
         <receiver
             android:name=".AudiobookWidget"

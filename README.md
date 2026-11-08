@@ -33,12 +33,13 @@ Open it and allow installs from your browser when asked. Updates install over
 the old version (same signing key).
 
 ## Updating
-Long-press the widget → its settings entry (pencil), or open the app → **Get the latest build**,
-download the APK and open it. It installs over the old version.
+Install **Widget Updater** (https://github.com/jonomf/widget-updater/releases/latest). It checks
+GitHub for all widget apps, and when a newer build of this one is out the widget shows a small
+**↑ symbol** (beside the title; top corner at 1×1). Tap it to install the update.
 
-This app deliberately has **no internet access**. An in-app updater (build 6) combined
-notification access with internet + app-install permissions, which Play Protect blocks outright
-as a fraud/dropper pattern for sideloaded apps. Updates have to come from a separate app.
+This app itself stays offline: an in-app updater (build 6) combined notification access with
+internet + app-install permissions, which Play Protect blocks outright as a fraud/dropper pattern.
+Without the Updater: long-press → settings entry → **Get the latest build in the browser**.
 
 ## Setup
 1. Open **Audiobook** → **Allow notification access** → turn it on.

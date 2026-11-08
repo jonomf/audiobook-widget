@@ -209,6 +209,15 @@ object WidgetRenderer {
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
         rv.setOnClickPendingIntent(R.id.play, control(AudiobookWidget.ACTION_PLAY_PAUSE))
 
+        // Update symbol (every size) when the Widget Updater reports a newer build. Tap: update.
+        val updater = if (UpdateStatus.available(ctx)) UpdateStatus.updaterIntent(ctx) else null
+        if (updater != null) {
+            rv.setViewVisibility(R.id.update, View.VISIBLE)
+            rv.setOnClickPendingIntent(R.id.update, activity(ctx, 4, updater))
+        } else {
+            rv.setViewVisibility(R.id.update, View.GONE)
+        }
+
         if (kind.text) {
             rv.setOnClickPendingIntent(R.id.content, mainTap)
             val icon = appIcon(ctx, m.source.pkg)
