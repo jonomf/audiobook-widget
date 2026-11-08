@@ -8,10 +8,8 @@ import android.media.session.MediaController
 
 class AudiobookWidget : AppWidgetProvider() {
 
-    /** Runs when the widget is added, after a reboot, and every few hours: redraw and check for updates. */
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
         WidgetRenderer.renderAll(ctx)
-        Updater.checkInBackground(ctx, goAsync()::finish)
     }
 
     override fun onReceive(ctx: Context, intent: Intent) {

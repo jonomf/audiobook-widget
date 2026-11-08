@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Updates: reach GitHub to check for and download new builds, then install them. -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
     <!-- Needed to find and launch these two apps on Android 11+. -->
     <queries>
         <package android:name="com.overdrive.mobile.android.libby" />
@@ -31,13 +27,6 @@
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name=".InstallReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
 
         <!-- Notification access is what lets an app see and control other apps' media sessions. -->
         <service
