@@ -21,4 +21,13 @@
         <item name="android:background">@drawable/chip_off</item>
         <item name="android:textColor">@color/chip_off_text</item>
     </style>
+
+    <!-- App icon badge on the cover's corner, with a ring so it stands out from the art. -->
+    <style name="Badge">
+        <item name="android:layout_gravity">bottom|end</item>
+        <item name="android:background">@drawable/badge_bg</item>
+        <item name="android:padding">1.5dp</item>
+        <item name="android:contentDescription">App</item>
+        <item name="android:visibility">gone</item>
+    </style>
 </resources>

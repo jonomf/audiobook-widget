@@ -24,4 +24,11 @@
         android:contentDescription="Play"
         android:padding="10dp"
         android:src="@drawable/ic_play" />
+
+    <ImageView
+        android:id="@+id/badge"
+        style="@style/Badge"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_margin="2dp" />
 </FrameLayout>

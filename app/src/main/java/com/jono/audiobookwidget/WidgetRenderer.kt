@@ -5,6 +5,9 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.net.Uri
 import android.util.SizeF
 import android.util.TypedValue
@@ -21,7 +24,7 @@ object WidgetRenderer {
     private enum class Kind(val layout: Int, val size: SizeF, val label: String) {
         TILE(R.layout.widget_tile, SizeF(50f, 50f), "cover + button"),
         SMALL(R.layout.widget_small, SizeF(100f, 50f), "cover, button"),
-        NARROW(R.layout.widget_narrow, SizeF(150f, 50f), "title, chapter, button"),
+        NARROW(R.layout.widget_narrow, SizeF(150f, 50f), "cover + button, title, chapter"),
         TILE_BIG(R.layout.widget_tile, SizeF(120f, 120f), "big cover + button"),
         COMPACT(R.layout.widget_compact, SizeF(220f, 50f), "cover, title, chapter, button"),
         LARGE(R.layout.widget_large, SizeF(220f, 130f), "full, with chips and skips"),
@@ -102,10 +105,16 @@ object WidgetRenderer {
     }
 
     private fun fill(ctx: Context, rv: RemoteViews, m: Model, kind: Kind): RemoteViews {
-        // Every layout has play/pause; all but the narrow one have a cover.
-        if (kind != Kind.NARROW) {
-            if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
-            else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
+        // Every layout: cover, app-icon badge, play/pause.
+        if (m.art != null) rv.setImageViewUri(R.id.art, m.art)
+        else rv.setImageViewResource(R.id.art, R.drawable.art_placeholder)
+        val icon = appIcon(ctx, m.source.pkg)
+        if (icon != null) {
+            rv.setImageViewBitmap(R.id.badge, icon)
+            rv.setContentDescription(R.id.badge, m.source.label)
+            rv.setViewVisibility(R.id.badge, View.VISIBLE)
+        } else {
+            rv.setViewVisibility(R.id.badge, View.GONE)
         }
         rv.setImageViewResource(R.id.play, if (m.playing) R.drawable.ic_pause else R.drawable.ic_play)
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
@@ -131,12 +140,17 @@ object WidgetRenderer {
                 val padDp = buttonDp * 0.25f
                 val pad = (padDp * ctx.resources.displayMetrics.density).toInt()
                 rv.setViewPadding(R.id.play, pad, pad, pad, pad)
+                val badgeDp = if (kind == Kind.TILE) 20f else 26f
+                rv.setViewLayoutWidth(R.id.badge, badgeDp, TypedValue.COMPLEX_UNIT_DIP)
+                rv.setViewLayoutHeight(R.id.badge, badgeDp, TypedValue.COMPLEX_UNIT_DIP)
             }
             Kind.SMALL -> {
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
             }
             Kind.NARROW, Kind.COMPACT -> {
                 setText(rv, m, kind)
+                // In the narrow layout the play button sits on the cover, so the whole cover toggles.
+                if (kind == Kind.NARROW) rv.setOnClickPendingIntent(R.id.art, control(AudiobookWidget.ACTION_PLAY_PAUSE))
                 rv.setOnClickPendingIntent(R.id.content, if (m.setupNeeded) setup else open)
                 rv.setTextViewText(R.id.source, "${m.source.label.uppercase()}  ⇄")
                 rv.setOnClickPendingIntent(R.id.source, broadcast(ctx, AudiobookWidget.ACTION_TOGGLE))
@@ -178,6 +192,24 @@ object WidgetRenderer {
         rv.setTextViewText(R.id.title, m.title)
         rv.setTextViewText(R.id.detail, detail)
         rv.setViewVisibility(R.id.detail, if (detail.isEmpty()) View.GONE else View.VISIBLE)
+    }
+
+    private val iconCache = mutableMapOf<String, Bitmap>()
+
+    /** The app's own launcher icon, as installed on the phone, drawn small for the badge. */
+    private fun appIcon(ctx: Context, pkg: String): Bitmap? {
+        iconCache[pkg]?.let { return it }
+        val drawable = try {
+            ctx.packageManager.getApplicationIcon(pkg)
+        } catch (e: PackageManager.NameNotFoundException) {
+            return null
+        }
+        val size = 72
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        drawable.setBounds(0, 0, size, size)
+        drawable.draw(Canvas(bmp))
+        iconCache[pkg] = bmp
+        return bmp
     }
 
     private fun openApp(ctx: Context, source: Source): PendingIntent? {

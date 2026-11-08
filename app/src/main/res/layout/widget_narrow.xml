@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2×1 on most phones: no cover, so the title and chapter get the room. -->
+<!-- 2×1 on most phones: cover with play/pause on top (saves a column), then title and chapter. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -7,15 +7,45 @@
     android:background="@drawable/widget_bg"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="14dp"
+    android:paddingStart="6dp"
     android:paddingTop="6dp"
-    android:paddingEnd="8dp"
+    android:paddingEnd="10dp"
     android:paddingBottom="6dp">
+
+    <FrameLayout
+        android:layout_width="56dp"
+        android:layout_height="56dp">
+
+        <ImageView
+            android:id="@+id/art"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Play or pause"
+            android:scaleType="fitCenter"
+            android:src="@drawable/art_placeholder" />
+
+        <ImageView
+            android:id="@+id/play"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:background="@drawable/play_bg"
+            android:contentDescription="Play"
+            android:padding="7dp"
+            android:src="@drawable/ic_play" />
+
+        <ImageView
+            android:id="@+id/badge"
+            style="@style/Badge"
+            android:layout_width="16dp"
+            android:layout_height="16dp" />
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/content"
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_marginStart="10dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="vertical">
@@ -54,14 +84,4 @@
             android:textColor="@color/widget_subtext"
             android:textSize="12sp" />
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/play"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_marginStart="6dp"
-        android:background="@drawable/play_bg"
-        android:contentDescription="Play"
-        android:padding="10dp"
-        android:src="@drawable/ic_play" />
 </LinearLayout>
