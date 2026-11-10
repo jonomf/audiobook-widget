@@ -338,6 +338,7 @@ object WidgetRenderer {
         }
 
         if (kind.text) {
+            ClaudeLink.bind(ctx, rv, R.id.claude)
             rv.setOnClickPendingIntent(R.id.content, mainTap)
             val icon = appIcon(ctx, m.source.pkg)
             if (icon != null) {

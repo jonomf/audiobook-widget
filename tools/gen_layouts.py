@@ -5,7 +5,7 @@ sizes stay consistent. Both widgets (Audiobooks, Music) use these same layouts; 
 only the views that apply. Edit here, then run:  python3 tools/gen_layouts.py
 
 View ids the renderer relies on:
-  art, play, content, badge, title, update, line2, line3          (all text layouts)
+  art, play, content, badge, title, claude, update, line2, line3  (all text layouts)
   time, time_static                                                (strip "time left"; elapsed in time_row)
   up_next, time_row, progress, duration                            (big sizes)
   prev, back, fwd, next, speed, bookmark, action1..4               (controls)
@@ -104,6 +104,10 @@ def text_col(title_lines=1, line2_lines=1, time=False, width='0dp', height='matc
             android:id="@+id/title"
             style="@style/Title"
             android:maxLines="{title_lines}" />
+
+        <ImageView
+            android:id="@+id/claude"
+            style="@style/ClaudeLink" />
 
         <ImageView
             android:id="@+id/update"

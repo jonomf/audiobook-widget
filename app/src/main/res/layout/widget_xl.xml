@@ -44,6 +44,10 @@
                     android:maxLines="3" />
 
                 <ImageView
+                    android:id="@+id/claude"
+                    style="@style/ClaudeLink" />
+
+                <ImageView
                     android:id="@+id/update"
                     style="@style/UpdateSymbol" />
             </LinearLayout>

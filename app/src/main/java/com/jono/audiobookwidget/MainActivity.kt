@@ -66,6 +66,8 @@ class MainActivity : Activity() {
             setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) }
         })
 
+        ClaudeLink.addSection(this, col) { WidgetRenderer.renderAll(this) }
+
         // --- Playback access ---
         col.addView(heading("Playback access"))
         status = TextView(this).apply { textSize = 15f; setPadding(0, 0, 0, dp(8)) }

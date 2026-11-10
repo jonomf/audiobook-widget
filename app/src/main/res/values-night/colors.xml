@@ -10,4 +10,5 @@
     <color name="placeholder_bg">@android:color/system_accent2_800</color>
     <color name="placeholder_fg">@android:color/system_accent2_200</color>
     <color name="icon_bg">#FF2B4C7E</color>
+    <color name="claude_link">@android:color/system_accent1_200</color>
 </resources>
