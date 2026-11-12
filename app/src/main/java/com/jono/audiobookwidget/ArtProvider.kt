@@ -20,11 +20,15 @@ class ArtProvider : ContentProvider() {
         val id = uri.pathSegments.firstOrNull()
         val ctx = context
         // Cover ids are short hex hashes; anything else (e.g. a path) is refused.
-        if (ctx == null || id == null || !id.matches(Regex("m?[0-9a-f]{1,40}"))) {
+        if (ctx == null || id == null || !id.matches(Regex("[mp]?[0-9a-f]{1,40}"))) {
             throw FileNotFoundException(uri.toString())
         }
-        // "m…" ids are music covers (MusicStore); plain ids are book covers (Store).
-        val file = if (id.startsWith("m")) MusicStore.coverFile(ctx, id.drop(1)) else Store.coverFile(ctx, id)
+        // "m…" = music (MusicStore), "p…" = podcasts (PodcastStore), plain = books (Store).
+        val file = when {
+            id.startsWith("m") -> MusicStore.coverFile(ctx, id.drop(1))
+            id.startsWith("p") -> PodcastStore.coverFile(ctx, id.drop(1))
+            else -> Store.coverFile(ctx, id)
+        }
         if (!file.exists()) throw FileNotFoundException(uri.toString())
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }

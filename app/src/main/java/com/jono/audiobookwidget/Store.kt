@@ -23,11 +23,28 @@ import kotlin.math.min
  * Remembers recent books across both apps (title, chapter, author, cover), so the widget
  * can show the last book after an app closes and list other recent books when there's room.
  */
-object Store {
-    private const val MAX_RECENTS = 8
+/** Audiobooks (Libby + Audible). */
+val Store = BookStore(prefsName = "state", coverPrefix = "cover_", idPrefix = "", defaultPkg = Sources.LIBBY.pkg, migrates = true)
 
-    /** lastPlayed marker for books fetched while their app wasn't running. */
-    private const val RECOVERED = 1L
+/** Podcasts (Pocket Casts): same model, the show plays the role of the book and the episode the chapter. */
+val PodcastStore = BookStore(prefsName = "podcasts", coverPrefix = "pcover_", idPrefix = "p", defaultPkg = Sources.POCKETCASTS.pkg)
+
+class BookStore(
+    private val prefsName: String,
+    /** Cover files are "<coverPrefix><id>.png"; prefixes keep each store's files apart. */
+    private val coverPrefix: String,
+    /** Cover URIs are ".../<idPrefix><id>/<version>", so ArtProvider knows which store to ask. */
+    private val idPrefix: String,
+    private val defaultPkg: String,
+    /** Only the audiobook store carries over data from builds before 9. */
+    private val migrates: Boolean = false,
+) {
+    private companion object {
+        const val MAX_RECENTS = 8
+
+        /** lastPlayed marker for books fetched while their app wasn't running. */
+        const val RECOVERED = 1L
+    }
 
     /** One book. [key] is app + title; the first entry per app is that app's current book. */
     data class Book(
@@ -41,10 +58,10 @@ object Store {
         val mediaId: String? = null,
     )
 
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences("state", Context.MODE_PRIVATE)
+    private fun prefs(ctx: Context) = ctx.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
     fun selected(ctx: Context): String =
-        prefs(ctx).getString("selected", null) ?: Sources.LIBBY.pkg
+        prefs(ctx).getString("selected", null) ?: defaultPkg
 
     fun select(ctx: Context, pkg: String) {
         prefs(ctx).edit().putString("selected", pkg).apply()
@@ -145,14 +162,14 @@ object Store {
         return digest.take(10).joinToString("") { "%02x".format(it) }
     }
 
-    fun coverFile(ctx: Context, id: String) = File(ctx.filesDir, "cover_$id.png")
+    fun coverFile(ctx: Context, id: String) = File(ctx.filesDir, "$coverPrefix$id.png")
 
     /** Content URI for a book's cover; the version changes whenever the file does, so the launcher reloads it. */
     fun coverUri(ctx: Context, book: Book): Uri? {
         val id = coverId(book.key)
         val f = coverFile(ctx, id)
         if (!f.exists()) return null
-        return Uri.parse("content://${ctx.packageName}.art/$id/${f.lastModified()}")
+        return Uri.parse("content://${ctx.packageName}.art/$idPrefix$id/${f.lastModified()}")
     }
 
     /**
@@ -174,6 +191,7 @@ object Store {
      * recents list once, covers included, so nothing is lost on upgrade.
      */
     private fun migrateOnce(ctx: Context) {
+        if (!migrates) return
         val p = prefs(ctx)
         if (p.getBoolean("migrated_recents", false)) return
         p.edit().putBoolean("migrated_recents", true).apply()
@@ -220,8 +238,8 @@ object Store {
         }
         prefs(ctx).edit().putString("recents", arr.toString()).apply()
         // Drop covers of books that fell off the list.
-        val keep = list.map { "cover_${coverId(it.key)}.png" }.toSet()
-        ctx.filesDir.listFiles()?.filter { it.name.startsWith("cover_") && it.name !in keep }?.forEach { it.delete() }
+        val keep = list.map { "$coverPrefix${coverId(it.key)}.png" }.toSet()
+        ctx.filesDir.listFiles()?.filter { it.name.startsWith(coverPrefix) && it.name !in keep }?.forEach { it.delete() }
     }
 
     /** Square-crops, scales and rounds the cover once, when it arrives. */

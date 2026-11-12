@@ -1,19 +1,23 @@
-# Media widgets (Audiobooks + Music)
+# Media widgets (Audiobooks, Music, Podcasts + Now Playing)
 
-One app, two home-screen widgets that look and behave the same at every size:
-- **Audiobooks**: whatever **Libby** or **Audible** is playing. It switches to whichever app starts
-  playing; tap the app icon to switch by hand.
+One app, home-screen widgets that look and behave the same at every size:
+- **Audiobooks**: whatever **Libby** or **Audible** is playing. It follows whichever app is playing.
 - **Music**: whatever **YouTube Music** is playing (merged in from jonomf/ytmusic-widget).
+- **Podcasts**: whatever **Pocket Casts** is playing. Same model as audiobooks: the show plays the
+  role of the book, the episode the chapter.
+- **Now Playing**: one square button each for your latest **music, audiobook and podcast**: the art
+  with a big play/pause on it. Tap to pause or resume right there (if the app is closed, it's asked
+  to resume without opening). A row of three; resize it tall for a column.
 
 They differ in content and in the controls of the bigger sizes / full panel:
 
-| | Audiobooks | Music |
-|---|---|---|
-| Lines | title · chapter · time left · author | song · artist · time left · album |
-| 3×1 grid / 4×1 covers | other recent books | recent albums and mixes |
-| Recent list | books, with chapter and app | songs |
-| Controls | chapter back/next, skip back/forward, speed, bookmark | previous/next, YouTube Music's own buttons (like, dislike…) |
-| Extra in full panel | bookmarks (tap to jump back), Libby/Audible switcher | |
+| | Audiobooks | Music | Podcasts |
+|---|---|---|---|
+| Lines | title · chapter · time left · author | song · artist · time left · album | show/episode · time left |
+| 3×1 grid / 4×1 covers | other recent books | recent albums and mixes | other recent shows |
+| Recent list | books, with chapter and app | songs | shows, with latest episode |
+| Controls | chapter back/next, skip back/forward, speed, bookmark | previous/next, YouTube Music's own buttons (like, dislike…) | skip back/forward, speed, Pocket Casts' own buttons |
+| Extra in full panel | bookmarks (tap to jump back), Libby/Audible switcher | | |
 
 **Tapping any recent item plays it** without opening its app (book: resumes or plays it in Libby or
 Audible; song/album/mix: YouTube Music finds and plays it). This uses the same requests Android Auto
@@ -57,8 +61,9 @@ other apps' media sessions. This app only looks at Libby and Audible.
 - `MediaWidget` is the shared provider; `AudiobookWidget` and `MusicWidget` just pick a profile.
 - `PanelActivity` is the expand panel; it draws the XL layout with the same code.
 - `ArtProvider` serves the saved covers to the launcher by URI.
-- `Store` keeps recent books across Libby and Audible; `MusicStore` keeps recent songs and the
-  albums/mixes they came from (separate prefs and cover files).
+- `BookStore` keeps recent items per app: `Store` (books: Libby, Audible) and `PodcastStore`
+  (Pocket Casts); `MusicStore` keeps recent songs and the albums/mixes they came from. Each has its
+  own prefs and cover files ("cover_", "pcover_", "mcover_").
 - `RecentFetcher` asks apps that aren't running for their last-played book (media browser "recent" root), best effort.
 - To follow another app, add it to `Sources.kt` and to `<queries>` in the manifest.
 

@@ -118,6 +118,7 @@ object WidgetRenderer {
     fun providerClass(p: Profile): Class<*> = when (p) {
         Profile.BOOKS -> AudiobookWidget::class.java
         Profile.MUSIC -> MusicWidget::class.java
+        Profile.PODCASTS -> PodcastWidget::class.java
     }
 
     fun renderAll(ctx: Context) {
@@ -126,6 +127,8 @@ object WidgetRenderer {
             val ids = mgr.getAppWidgetIds(ComponentName(ctx, providerClass(p)))
             if (ids.isNotEmpty()) mgr.updateAppWidget(ids, build(ctx, p))
         }
+        val mixIds = mgr.getAppWidgetIds(ComponentName(ctx, NowPlayingWidget::class.java))
+        if (mixIds.isNotEmpty()) mgr.updateAppWidget(mixIds, buildMix(ctx))
         listeners.forEach { it() }
     }
 
@@ -163,14 +166,19 @@ object WidgetRenderer {
                 "• ${p.label}: ${w}×${h} dp → ${bestFit(w.toFloat(), h.toFloat()).label}"
             }
         }
-        return lines.joinToString("\n").ifEmpty { "No widgets on your home screen yet." }
+        val mix = mgr.getAppWidgetIds(ComponentName(ctx, NowPlayingWidget::class.java)).map { id ->
+            val o = mgr.getAppWidgetOptions(id)
+            "• Now Playing: ${o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)}×${o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)} dp"
+        }
+        return (lines + mix).joinToString("\n").ifEmpty { "No widgets on your home screen yet." }
     }
 
     // ---------------------------------------------------------------- content per profile
 
     private fun model(ctx: Context, p: Profile): Model = when (p) {
-        Profile.BOOKS -> booksModel(ctx)
+        Profile.BOOKS -> itemsModel(ctx, Profile.BOOKS, Store, "Set up audiobook widget")
         Profile.MUSIC -> musicModel(ctx)
+        Profile.PODCASTS -> itemsModel(ctx, Profile.PODCASTS, PodcastStore, "Set up podcast widget")
     }
 
     private fun setupModel(p: Profile, source: Source, title: String) = Model(
@@ -178,27 +186,32 @@ object WidgetRenderer {
         false, false, false, false, false, emptyList(), emptyList(), emptyList(), emptyList(),
     )
 
-    private fun booksModel(ctx: Context): Model {
-        val source = Sources.byPkg(Store.selected(ctx))?.takeIf { it in Profile.BOOKS.sources } ?: Sources.LIBBY
-        if (!Media.hasAccess(ctx)) return setupModel(Profile.BOOKS, source, "Set up audiobook widget")
+    /**
+     * Audiobooks and podcasts share one model: a book (or show) with a chapter (or episode), recent
+     * items across the profile's apps, skip back/forward and speed. Books add bookmarks; podcasts
+     * add the app's own extra buttons (e.g. Pocket Casts' star), minus ones the widget already has.
+     */
+    private fun itemsModel(ctx: Context, p: Profile, store: BookStore, setupTitle: String): Model {
+        val source = Sources.byPkg(store.selected(ctx))?.takeIf { it in p.sources } ?: p.sources.first()
+        if (!Media.hasAccess(ctx)) return setupModel(p, source, setupTitle)
         val c = Media.controllerFor(ctx, source.pkg)
-        val recents = Store.recents(ctx)
+        val recents = store.recents(ctx)
         val book = recents.firstOrNull { it.pkg == source.pkg }
-        val playingBooks = Media.controllers(ctx, Profile.BOOKS).filter { Media.isPlaying(it) }
+        val playingBooks = Media.controllers(ctx, p).filter { Media.isPlaying(it) }
             .mapNotNull { pc -> recents.firstOrNull { it.pkg == pc.packageName } }
         val others = distinctBooks(recents, listOfNotNull(book) + playingBooks).mapIndexed { i, b ->
             Item(
-                art = Store.coverUri(ctx, b),
+                art = store.coverUri(ctx, b),
                 title = b.title,
                 sub = listOfNotNull(b.chapter, b.author).joinToString(" · "),
                 pkg = b.pkg,
-                tap = bookTap(ctx, b, i),
+                tap = bookTap(ctx, store, b, 300 + p.ordinal * 20 + i),
             )
         }
         val speed = c?.let { Media.speed(it) } ?: 1f
         val canSetSpeed = c?.let { Media.supports(it, PlaybackState.ACTION_SET_PLAYBACK_SPEED) } ?: false
         return Model(
-            profile = Profile.BOOKS,
+            profile = p,
             source = source,
             setupNeeded = false,
             hasSession = c != null,
@@ -206,7 +219,7 @@ object WidgetRenderer {
             title = book?.title ?: source.label,
             line2 = book?.chapter ?: if (book == null) "Tap to open ${source.label}" else null,
             line3 = book?.author,
-            art = book?.let { Store.coverUri(ctx, it) },
+            art = book?.let { store.coverUri(ctx, it) },
             positionMs = c?.let { Media.positionMs(it) } ?: 0L,
             durationMs = c?.let { Media.duration(it) } ?: 0L,
             speed = speed,
@@ -218,11 +231,13 @@ object WidgetRenderer {
             } ?: false,
             showSpeed = canSetSpeed || speed != 1f,
             canSetSpeed = canSetSpeed,
-            bookmarks = true,
-            actions = emptyList(),
+            bookmarks = p == Profile.BOOKS,
+            actions = if (p == Profile.PODCASTS) {
+                c?.playbackState?.let { appActions(ctx, source.pkg, it) }.orEmpty().filterNot { duplicatesControls(it.label) }
+            } else emptyList(),
             grid = others,
             rows = others,
-            marks = book?.let { Bookmarks.forBook(ctx, it.key) }.orEmpty(),
+            marks = if (p == Profile.BOOKS) book?.let { Bookmarks.forBook(ctx, it.key) }.orEmpty() else emptyList(),
         )
     }
 
@@ -272,11 +287,11 @@ object WidgetRenderer {
      * Matching is by normalized title, and also catches the same book reported differently
      * (one title containing the other, or a recent entry named after the playing chapter).
      */
-    private fun distinctBooks(all: List<Store.Book>, current: List<Store.Book>): List<Store.Book> {
+    private fun distinctBooks(all: List<BookStore.Book>, current: List<BookStore.Book>): List<BookStore.Book> {
         fun norm(t: String?) = t.orEmpty().lowercase().filter { it.isLetterOrDigit() }
         val excluded = current.flatMap { listOf(norm(it.title), norm(it.chapter)) }.filter { it.isNotEmpty() }
         val currentKeys = current.map { it.key }.toSet()
-        fun isCurrent(b: Store.Book): Boolean {
+        fun isCurrent(b: BookStore.Book): Boolean {
             if (b.key in currentKeys) return true
             val t = norm(b.title)
             return excluded.any { e -> t == e || (t.length >= 6 && e.length >= 6 && (t in e || e in t)) }
@@ -329,13 +344,7 @@ object WidgetRenderer {
         rv.setContentDescription(R.id.play, if (m.playing) "Pause" else "Play")
         rv.setOnClickPendingIntent(R.id.play, control(MediaWidget.ACTION_PLAY_PAUSE))
 
-        val updater = if (UpdateStatus.available(ctx)) UpdateStatus.updaterIntent(ctx) else null
-        if (updater != null) {
-            rv.setViewVisibility(R.id.update, View.VISIBLE)
-            rv.setOnClickPendingIntent(R.id.update, activity(ctx, 4, updater))
-        } else {
-            rv.setViewVisibility(R.id.update, View.GONE)
-        }
+        bindUpdate(ctx, rv)
 
         if (kind.text) {
             ClaudeLink.bind(ctx, rv, R.id.claude)
@@ -488,6 +497,89 @@ object WidgetRenderer {
         return rv
     }
 
+    /** Update symbol when the Widget Updater reports a newer build. Tap: update. */
+    private fun bindUpdate(ctx: Context, rv: RemoteViews) {
+        val updater = if (UpdateStatus.available(ctx)) UpdateStatus.updaterIntent(ctx) else null
+        if (updater != null) {
+            rv.setViewVisibility(R.id.update, View.VISIBLE)
+            rv.setOnClickPendingIntent(R.id.update, activity(ctx, 4, updater))
+        } else {
+            rv.setViewVisibility(R.id.update, View.GONE)
+        }
+    }
+
+    // ---------------------------------------------------------------- Now Playing widget
+
+    private val MIX = intArrayOf(R.id.mix1_play, R.id.mix2_play, R.id.mix3_play)
+    private val MIX_ART = intArrayOf(R.id.mix1_art, R.id.mix2_art, R.id.mix3_art)
+
+    /** Left to right (or top to bottom): music, audiobook, podcast. */
+    private val MIX_ORDER = listOf(Profile.MUSIC, Profile.BOOKS, Profile.PODCASTS)
+
+    /** The latest item of one media type, from whichever of its apps played most recently. */
+    private class MixEntry(val pkg: String, val title: String, val sub: String?, val art: Uri?, val mediaId: String?)
+
+    private fun mixEntry(ctx: Context, p: Profile): MixEntry? = when (p) {
+        Profile.MUSIC -> MusicStore.recents(ctx).firstOrNull()?.let {
+            MixEntry(Sources.YTMUSIC.pkg, it.title, it.artist, MusicStore.coverUri(ctx, it), null)
+        }
+        Profile.BOOKS -> Store.recents(ctx).firstOrNull()?.let {
+            MixEntry(it.pkg, it.title, it.author, Store.coverUri(ctx, it), it.mediaId)
+        }
+        Profile.PODCASTS -> PodcastStore.recents(ctx).firstOrNull()?.let {
+            MixEntry(it.pkg, it.title, it.author, PodcastStore.coverUri(ctx, it), it.mediaId)
+        }
+    }
+
+    /** A row of three (or a column, if resized tall). */
+    private fun buildMix(ctx: Context): RemoteViews = RemoteViews(
+        mapOf(
+            SizeF(110f, 40f) to fillMix(ctx, RemoteViews(ctx.packageName, R.layout.widget_mix)),
+            SizeF(40f, 110f) to fillMix(ctx, RemoteViews(ctx.packageName, R.layout.widget_mix_v)),
+        )
+    )
+
+    /**
+     * Each button: the latest item's art with play/pause on it. Tap: pause or resume it right there
+     * (if its app is closed, the app is asked to resume it without opening; see Player).
+     */
+    private fun fillMix(ctx: Context, rv: RemoteViews): RemoteViews {
+        val setup = activity(ctx, 1, Intent(ctx, MainActivity::class.java))
+        val access = Media.hasAccess(ctx)
+        for ((i, p) in MIX_ORDER.withIndex()) {
+            val e = if (access) mixEntry(ctx, p) else null
+            val c = e?.let { Media.controllerFor(ctx, it.pkg) }
+            val playing = c != null && Media.isPlaying(c)
+            if (e?.art != null) rv.setImageViewUri(MIX_ART[i], e.art)
+            else rv.setImageViewResource(MIX_ART[i], R.drawable.art_placeholder)
+            rv.setImageViewResource(MIX[i], if (playing) R.drawable.ic_pause_big else R.drawable.ic_play_big)
+            val what = e?.let { listOfNotNull(it.title, it.sub).joinToString(", ") } ?: "nothing yet"
+            rv.setContentDescription(MIX[i], "${p.label}: $what. ${if (playing) "Pause" else "Play"}")
+            val tap = when {
+                !access -> setup
+                e == null -> openApp(ctx, p.sources.first()) ?: setup
+                c != null -> mixBroadcast(ctx, e.pkg)
+                else -> playTap(
+                    ctx, 400 + i, e.pkg, true, e.mediaId,
+                    listOfNotNull(e.title, e.sub).joinToString(" "), Bundle(),
+                )
+            }
+            rv.setOnClickPendingIntent(MIX[i], tap)
+        }
+        ClaudeLink.bind(ctx, rv, R.id.claude)
+        bindUpdate(ctx, rv)
+        return rv
+    }
+
+    private fun mixBroadcast(ctx: Context, pkg: String): PendingIntent {
+        val intent = Intent(ctx, NowPlayingWidget::class.java)
+            .setAction(NowPlayingWidget.ACTION_TOGGLE_APP)
+            .setData(Uri.fromParts("mw", pkg, null))
+        return PendingIntent.getBroadcast(
+            ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+
     private fun setArt(rv: RemoteViews, id: Int, item: Item) {
         if (item.art != null) rv.setImageViewUri(id, item.art)
         else rv.setImageViewResource(id, R.drawable.art_placeholder)
@@ -584,14 +676,20 @@ object WidgetRenderer {
     }
 
     /** A book: resume it if it's what that app last had, otherwise ask the app to play it by id or title. */
-    private fun bookTap(ctx: Context, b: Store.Book, index: Int): PendingIntent {
-        val isAppCurrent = Store.current(ctx, b.pkg)?.key == b.key
+    /** App buttons the widget already shows as its own controls (skip, rewind, speed…). */
+    private fun duplicatesControls(name: String): Boolean {
+        val n = name.lowercase(Locale.US)
+        return listOf("skip", "rewind", "forward", "jump", "back", "speed", "seek").any { it in n }
+    }
+
+    private fun bookTap(ctx: Context, store: BookStore, b: BookStore.Book, code: Int): PendingIntent {
+        val isAppCurrent = store.current(ctx, b.pkg)?.key == b.key
         val search = Bundle().apply {
             putString(MediaStore.EXTRA_MEDIA_TITLE, b.title)
             b.author?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
         }
         val query = listOfNotNull(b.title, b.author).joinToString(" ")
-        return playTap(ctx, 300 + index, b.pkg, isAppCurrent, b.mediaId, query, search)
+        return playTap(ctx, code, b.pkg, isAppCurrent, b.mediaId, query, search)
     }
 
     /** An album or mix: ask YouTube Music to find and play it. */

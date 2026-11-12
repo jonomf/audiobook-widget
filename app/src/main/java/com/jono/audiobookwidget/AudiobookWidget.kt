@@ -13,6 +13,32 @@ class AudiobookWidget : MediaWidget(Profile.BOOKS)
 /** The Music widget: YouTube Music. */
 class MusicWidget : MediaWidget(Profile.MUSIC)
 
+/** The Podcasts widget: Pocket Casts. */
+class PodcastWidget : MediaWidget(Profile.PODCASTS)
+
+/**
+ * The Now Playing widget: one square button each for the latest music, audiobook and podcast.
+ * Tapping a button whose app is running pauses or resumes it here; otherwise the button asks
+ * the app to resume (via PlayActivity), so this provider only handles the toggle.
+ */
+class NowPlayingWidget : AppWidgetProvider() {
+    override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
+        WidgetRenderer.renderAll(ctx)
+    }
+
+    override fun onReceive(ctx: Context, intent: Intent) {
+        super.onReceive(ctx, intent)
+        if (intent.action != ACTION_TOGGLE_APP) return
+        val pkg = intent.data?.schemeSpecificPart ?: return
+        val c = Media.controllerFor(ctx, pkg)
+        if (c != null) Media.togglePlay(c) else WidgetRenderer.renderAll(ctx)
+    }
+
+    companion object {
+        const val ACTION_TOGGLE_APP = "com.jono.audiobookwidget.TOGGLE_APP"
+    }
+}
+
 /**
  * Shared widget provider: both widgets handle the same button taps, each against its own apps.
  * Drawing is in WidgetRenderer.
@@ -53,6 +79,7 @@ abstract class MediaWidget(private val profile: Profile) : AppWidgetProvider() {
     private fun current(ctx: Context): MediaController? = when (profile) {
         Profile.BOOKS -> Media.controllerFor(ctx, Store.selected(ctx))
         Profile.MUSIC -> Media.controllerFor(ctx, Sources.YTMUSIC.pkg)
+        Profile.PODCASTS -> Media.controllerFor(ctx, Sources.POCKETCASTS.pkg)
     }
 
     /** The listener service redraws once the app reacts; only redraw here if the session is gone. */

@@ -2,6 +2,10 @@
     <string name="app_name">Media</string>
     <string name="widget_books">Audiobooks</string>
     <string name="widget_music">Music</string>
+    <string name="widget_podcasts">Podcasts</string>
+    <string name="widget_mix">Now Playing</string>
     <string name="widget_desc">Libby and Audible: what\'s playing, controls, recent books, bookmarks</string>
     <string name="widget_desc_music">YouTube Music: what\'s playing, controls, recent songs, albums and mixes</string>
+    <string name="widget_desc_podcasts">Pocket Casts: what\'s playing, controls, recent shows and episodes</string>
+    <string name="widget_desc_mix">One button each for your latest music, audiobook and podcast</string>
 </resources>

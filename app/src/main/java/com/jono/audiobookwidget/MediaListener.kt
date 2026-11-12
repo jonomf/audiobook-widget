@@ -14,7 +14,7 @@ import kotlin.math.abs
 
 /**
  * Runs while notification access is granted. Watches every followed app's media session
- * (Libby, Audible, YouTube Music), saves what each is playing into its profile's store, and
+ * (Libby, Audible, YouTube Music, Pocket Casts), saves what each is playing into its profile's store, and
  * redraws the widgets whenever that changes. Never reads notifications.
  */
 class MediaListener : NotificationListenerService() {
@@ -43,7 +43,7 @@ class MediaListener : NotificationListenerService() {
         try {
             msm.addOnActiveSessionsChangedListener(sessionsListener, component, handler)
             track(msm.getActiveSessions(component))
-            // Book apps that aren't running: ask them for their last-played book.
+            // Book and podcast apps that aren't running: ask them for their last-played item.
             RecentFetcher.fillGaps(this) { redraw() }
         } catch (e: SecurityException) {
             // Access was revoked between connecting and now.
@@ -93,6 +93,7 @@ class MediaListener : NotificationListenerService() {
 
     private fun capture(c: MediaController): String = when (Profile.of(c.packageName)) {
         Profile.MUSIC -> MusicStore.capture(this, c)
+        Profile.PODCASTS -> PodcastStore.capture(this, c)
         else -> Store.capture(this, c)
     }
 
