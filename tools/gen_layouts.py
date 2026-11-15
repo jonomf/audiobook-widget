@@ -14,7 +14,8 @@ View ids the renderer relies on:
   recent_label, recN, recN_art, recN_icon, recN_title, recN_sub    (recent rows)
   bm_label, bmN, bmN_text, bmN_when                                (bookmarks, XL)
   switch1, switch2                                                 (source switcher, XL)
-  mix1..3, mixN_art, mixN_play, claude, update                     (Now Playing widget)
+  Now Playing: mix0 (latest, 1x1/2x1), mix1..3 (type buttons), info + text ids above,
+               mrecN / mrecN_art (+ _icon/_title/_sub in rows), mrecent_label
 """
 import os
 
@@ -424,14 +425,18 @@ L['widget_xl'] = root('LinearLayout',
     '4x3+ and the expand panel: everything.', orient='vertical', pad='12dp')
 
 
-def mix_cell(k, first, vertical):
-    m = '' if first else ('\n    android:layout_marginTop="5dp"' if vertical else '\n    android:layout_marginStart="5dp"')
-    size = ('android:layout_width="match_parent"\n    android:layout_height="0dp"' if vertical
-            else 'android:layout_width="0dp"\n    android:layout_height="match_parent"')
+# ---------------------------------------------------------------- Now Playing widget
+# Adapts to every size: 1x1 latest item; 2x1 latest + info; 3x1 three type buttons
+# (music, audiobook, podcast); 4x1 buttons + info; 2x2 buttons + info in a grid; tall column of
+# buttons; 3-4x2 adds recent covers from all types; 4x3+ a recent list with app icons.
+
+def mix_button(k, w='0dp', h='match_parent', weight='1', margin=None):
+    m = f'\n    android:layout_{margin}="5dp"' if margin else ''
+    wt = f'\n    android:layout_weight="{weight}"' if weight else ''
     return f'''<FrameLayout
     android:id="@+id/mix{k}"
-    {size}
-    android:layout_weight="1"{m}>
+    android:layout_width="{w}"
+    android:layout_height="{h}"{wt}{m}>
 
     <ImageView
         android:id="@+id/mix{k}_art"
@@ -442,18 +447,95 @@ def mix_cell(k, first, vertical):
     <ImageView
         android:id="@+id/mix{k}_play"
         style="@style/PlayOverlay" />
-</FrameLayout>'''
+</FrameLayout>
+'''
 
 
-def mix(vertical):
-    """Now Playing widget: one square button per media type (music, audiobook, podcast)."""
-    cells = '\n'.join(mix_cell(k, k == 1, vertical) for k in (1, 2, 3))
-    side = f'''<LinearLayout
-    android:layout_width="{'match_parent' if vertical else 'wrap_content'}"
-    android:layout_height="{'wrap_content' if vertical else 'match_parent'}"
-    android:layout_{'marginTop' if vertical else 'marginStart'}="4dp"
+def mix_single(update=False):
+    """The latest item of any type: art filling the cell, big play/pause on it."""
+    u = '''
+    <ImageView
+        android:id="@+id/update"
+        style="@style/UpdateSymbol"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp" />''' if update else ''
+    return f'''<FrameLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_gravity="center">
+
+    <ImageView
+        android:id="@+id/mix0_art"
+        style="@style/Cover" />
+
+    <ImageView
+        android:id="@+id/mix0_play"
+        style="@style/PlayOverlay" />{u}
+</FrameLayout>
+'''
+
+
+def mix_info(w='0dp', h='match_parent', weight='1', margin='8dp', margin_side='marginStart'):
+    """What's playing (or played last): [app icon] title, line 2, time left, line 3. Tap: open its app."""
+    wt = f'\n    android:layout_weight="{weight}"' if weight else ''
+    m = f'\n    android:layout_{margin_side}="{margin}"' if margin else ''
+    return f'''<LinearLayout
+    android:id="@+id/info"
+    android:layout_width="{w}"
+    android:layout_height="{h}"{wt}{m}
+    android:gravity="center_vertical"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/badge"
+            style="@style/Badge" />
+
+        <TextView
+            android:id="@+id/title"
+            style="@style/Title"
+            android:maxLines="2" />
+
+        <ImageView
+            android:id="@+id/claude"
+            style="@style/ClaudeLink" />
+
+        <ImageView
+            android:id="@+id/update"
+            style="@style/UpdateSymbol" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/line2"
+        style="@style/Chapter"
+        android:maxLines="1" />
+
+    <Chronometer
+        android:id="@+id/time"
+        style="@style/TimeLeft" />
+
+    <TextView
+        android:id="@+id/time_static"
+        style="@style/TimeLeftStatic" />
+
+    <TextView
+        android:id="@+id/line3"
+        style="@style/Author" />
+</LinearLayout>
+'''
+
+
+SIDE_LINKS = '''<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_marginStart="4dp"
     android:gravity="center"
-    android:orientation="{'horizontal' if vertical else 'vertical'}">
+    android:orientation="vertical">
 
     <ImageView
         android:id="@+id/claude"
@@ -466,21 +548,150 @@ def mix(vertical):
         android:layout_marginStart="0dp" />
 </LinearLayout>
 '''
-    body = f'''<LinearLayout
-    android:layout_width="{'match_parent' if vertical else '0dp'}"
-    android:layout_height="{'0dp' if vertical else 'match_parent'}"
-    android:layout_weight="1"
-    android:orientation="{'vertical' if vertical else 'horizontal'}">
+
+
+def buttons_row(with_info, height='match_parent', weight=None):
+    wt = f'\n    android:layout_weight="{weight}"' if weight else ''
+    cells = mix_button(1) + '\n' + mix_button(2, margin='marginStart') + '\n' + mix_button(3, margin='marginStart')
+    if with_info:
+        cells += '\n' + mix_info()
+    return f'''<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="{height}"{wt}
+    android:orientation="horizontal">
 
 {ind(cells, 4)}</LinearLayout>
-''' + '\n' + side
-    return root('LinearLayout', body,
-                'Now Playing: latest music, audiobook and podcast, one square button each (play/pause on the art).',
-                orient='vertical' if vertical else 'horizontal', pad='5dp')
+'''
 
 
-L['widget_mix'] = mix(False)
-L['widget_mix_v'] = mix(True)
+def mix_thumbs(n):
+    items = []
+    for k in range(1, n + 1):
+        m = '' if k == 1 else '\n    android:layout_marginStart="5dp"'
+        items.append(f'''<FrameLayout
+    android:id="@+id/mrec{k}"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"{m}
+    android:visibility="gone">
+
+    <ImageView
+        android:id="@+id/mrec{k}_art"
+        style="@style/RecentThumb" />
+</FrameLayout>''')
+    return '''<TextView
+    android:id="@+id/mrecent_label"
+    style="@style/SectionLabel"
+    android:text="Recent" />
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="44dp"
+    android:layout_marginTop="4dp"
+    android:orientation="horizontal">
+
+''' + ind('\n'.join(items), 4) + '''</LinearLayout>
+'''
+
+
+def mix_rows(n):
+    items = []
+    for k in range(1, n + 1):
+        items.append(f'''<LinearLayout
+    android:id="@+id/mrec{k}"
+    style="@style/RecentRow">
+
+    <ImageView
+        android:id="@+id/mrec{k}_art"
+        style="@style/RecentRowArt" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/mrec{k}_icon"
+                style="@style/RecentIcon" />
+
+            <TextView
+                android:id="@+id/mrec{k}_title"
+                style="@style/RecentTitle" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/mrec{k}_sub"
+            style="@style/RecentSub" />
+    </LinearLayout>
+</LinearLayout>''')
+    return '''<TextView
+    android:id="@+id/mrecent_label"
+    style="@style/SectionLabel"
+    android:text="Recent" />
+
+''' + '\n'.join(items) + '\n'
+
+
+NP = 'Now Playing'
+L['widget_mix_tile'] = root('FrameLayout', mix_single(update=True), f'{NP} 1x1: the latest item of any type, big play/pause on the art.', pad='4dp')
+L['widget_mix_strip_s'] = root('LinearLayout', mix_single() + '\n' + mix_info(),
+    f'{NP} 2x1: latest item (art + play/pause) and its info. Tap info: open its app.', orient='horizontal', pad='5dp')
+L['widget_mix'] = root('LinearLayout',
+    '<LinearLayout\n    android:layout_width="0dp"\n    android:layout_height="match_parent"\n    android:layout_weight="1"\n    android:orientation="horizontal">\n\n'
+    + ind(mix_button(1) + '\n' + mix_button(2, margin='marginStart') + '\n' + mix_button(3, margin='marginStart'), 4)
+    + '</LinearLayout>\n\n' + SIDE_LINKS,
+    f'{NP} 3x1: one button each for the latest music, audiobook, podcast.', orient='horizontal', pad='5dp')
+L['widget_mix_l'] = root('LinearLayout', buttons_row(True), f'{NP} 4x1: three type buttons + what\'s playing (tap: open its app).', orient='vertical', pad='5dp')
+L['widget_mix_v'] = root('LinearLayout',
+    mix_button(1, w='match_parent', h='0dp') + '\n' + mix_button(2, w='match_parent', h='0dp', margin='marginTop') + '\n'
+    + mix_button(3, w='match_parent', h='0dp', margin='marginTop')
+    + '''
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="4dp"
+    android:gravity="center"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/claude"
+        style="@style/ClaudeLink"
+        android:layout_marginStart="0dp" />
+
+    <ImageView
+        android:id="@+id/update"
+        style="@style/UpdateSymbol" />
+</LinearLayout>
+''', f'{NP} tall column: the three type buttons stacked.', orient='vertical', pad='5dp')
+L['widget_mix_square'] = root('LinearLayout',
+    '''<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:orientation="horizontal">
+
+''' + ind(mix_button(1) + '\n' + mix_button(2, margin='marginStart'), 4) + '''</LinearLayout>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginTop="5dp"
+    android:layout_weight="1"
+    android:orientation="horizontal">
+
+''' + ind(mix_button(3) + '\n' + mix_info(margin='5dp'), 4) + '</LinearLayout>\n',
+    f'{NP} 2x2: music and audiobook on top; podcast and what\'s playing below.', orient='vertical', pad='6dp')
+L['widget_mix_large'] = root('LinearLayout', buttons_row(True, height='0dp', weight='1') + '\n' + mix_thumbs(7),
+    f'{NP} 3-4x2: buttons + what\'s playing, then recent covers from all types.', orient='vertical', pad='8dp')
+L['widget_mix_xl'] = root('LinearLayout', buttons_row(True, height='96dp') + '\n' + mix_rows(5),
+    f'{NP} 4x3+: buttons + what\'s playing, then recent items from all types.', orient='vertical', pad='10dp')
 
 for name, xml in L.items():
     with open(os.path.join(OUT, name + '.xml'), 'w') as f:

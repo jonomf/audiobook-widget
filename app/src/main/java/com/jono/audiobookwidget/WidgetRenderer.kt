@@ -168,7 +168,9 @@ object WidgetRenderer {
         }
         val mix = mgr.getAppWidgetIds(ComponentName(ctx, NowPlayingWidget::class.java)).map { id ->
             val o = mgr.getAppWidgetOptions(id)
-            "• Now Playing: ${o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)}×${o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)} dp"
+            val w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+            val h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+            "• Now Playing: ${w}×${h} dp → ${bestFitMix(w.toFloat(), h.toFloat()).label}"
         }
         return (lines + mix).joinToString("\n").ifEmpty { "No widgets on your home screen yet." }
     }
@@ -510,66 +512,206 @@ object WidgetRenderer {
 
     // ---------------------------------------------------------------- Now Playing widget
 
+    /**
+     * Now Playing adapts to every size, like the other widgets: the latest item alone at 1×1, three
+     * type buttons (music, audiobook, podcast) from 3×1, what's playing beside them from 4×1, and
+     * recent items from all types when taller. Android picks the closest fitting layout.
+     */
+    private enum class MixKind(
+        val layout: Int,
+        val size: SizeF,
+        val label: String,
+        val single: Boolean = false,
+        val buttons: Boolean = false,
+        val info: Boolean = false,
+        val sideLinks: Boolean = false,
+        val recents: Int = 0,
+        val recentRows: Boolean = false,
+    ) {
+        TILE(R.layout.widget_mix_tile, SizeF(50f, 50f), "latest item", single = true),
+        STRIP_S(R.layout.widget_mix_strip_s, SizeF(150f, 50f), "latest item + info", single = true, info = true),
+        ROW(R.layout.widget_mix, SizeF(220f, 50f), "music, audiobook, podcast buttons", buttons = true, sideLinks = true),
+        ROW_INFO(R.layout.widget_mix_l, SizeF(320f, 50f), "3 buttons + what's playing", buttons = true, info = true),
+        COLUMN(R.layout.widget_mix_v, SizeF(50f, 150f), "3 buttons stacked", buttons = true, sideLinks = true),
+        SQUARE(R.layout.widget_mix_square, SizeF(150f, 150f), "3 buttons + what's playing, 2×2", buttons = true, info = true),
+        LARGE(R.layout.widget_mix_large, SizeF(260f, 150f), "buttons, what's playing, recent covers",
+            buttons = true, info = true, recents = 7),
+        XL(R.layout.widget_mix_xl, SizeF(260f, 250f), "buttons, what's playing, recent list",
+            buttons = true, info = true, recents = 5, recentRows = true),
+    }
+
     private val MIX = intArrayOf(R.id.mix1_play, R.id.mix2_play, R.id.mix3_play)
     private val MIX_ART = intArrayOf(R.id.mix1_art, R.id.mix2_art, R.id.mix3_art)
+    private val MREC = intArrayOf(R.id.mrec1, R.id.mrec2, R.id.mrec3, R.id.mrec4, R.id.mrec5, R.id.mrec6, R.id.mrec7)
+    private val MREC_ART = intArrayOf(
+        R.id.mrec1_art, R.id.mrec2_art, R.id.mrec3_art, R.id.mrec4_art, R.id.mrec5_art, R.id.mrec6_art, R.id.mrec7_art,
+    )
+    private val MREC_ICON = intArrayOf(R.id.mrec1_icon, R.id.mrec2_icon, R.id.mrec3_icon, R.id.mrec4_icon, R.id.mrec5_icon)
+    private val MREC_TITLE = intArrayOf(R.id.mrec1_title, R.id.mrec2_title, R.id.mrec3_title, R.id.mrec4_title, R.id.mrec5_title)
+    private val MREC_SUB = intArrayOf(R.id.mrec1_sub, R.id.mrec2_sub, R.id.mrec3_sub, R.id.mrec4_sub, R.id.mrec5_sub)
 
     /** Left to right (or top to bottom): music, audiobook, podcast. */
     private val MIX_ORDER = listOf(Profile.MUSIC, Profile.BOOKS, Profile.PODCASTS)
 
-    /** The latest item of one media type, from whichever of its apps played most recently. */
-    private class MixEntry(val pkg: String, val title: String, val sub: String?, val art: Uri?, val mediaId: String?)
-
-    private fun mixEntry(ctx: Context, p: Profile): MixEntry? = when (p) {
-        Profile.MUSIC -> MusicStore.recents(ctx).firstOrNull()?.let {
-            MixEntry(Sources.YTMUSIC.pkg, it.title, it.artist, MusicStore.coverUri(ctx, it), null)
-        }
-        Profile.BOOKS -> Store.recents(ctx).firstOrNull()?.let {
-            MixEntry(it.pkg, it.title, it.author, Store.coverUri(ctx, it), it.mediaId)
-        }
-        Profile.PODCASTS -> PodcastStore.recents(ctx).firstOrNull()?.let {
-            MixEntry(it.pkg, it.title, it.author, PodcastStore.coverUri(ctx, it), it.mediaId)
-        }
-    }
-
-    /** A row of three (or a column, if resized tall). */
-    private fun buildMix(ctx: Context): RemoteViews = RemoteViews(
-        mapOf(
-            SizeF(110f, 40f) to fillMix(ctx, RemoteViews(ctx.packageName, R.layout.widget_mix)),
-            SizeF(40f, 110f) to fillMix(ctx, RemoteViews(ctx.packageName, R.layout.widget_mix_v)),
-        )
+    /** One item of any type, from any of its apps. */
+    private class MixEntry(
+        val profile: Profile,
+        val key: String,
+        val pkg: String,
+        val title: String,
+        val line2: String?,
+        val line3: String?,
+        val art: Uri?,
+        val mediaId: String?,
+        val lastPlayed: Long,
+        /** What that app last had: tapping resumes it rather than searching. */
+        val appCurrent: Boolean,
     )
 
-    /**
-     * Each button: the latest item's art with play/pause on it. Tap: pause or resume it right there
-     * (if its app is closed, the app is asked to resume it without opening; see Player).
-     */
-    private fun fillMix(ctx: Context, rv: RemoteViews): RemoteViews {
-        val setup = activity(ctx, 1, Intent(ctx, MainActivity::class.java))
-        val access = Media.hasAccess(ctx)
-        for ((i, p) in MIX_ORDER.withIndex()) {
-            val e = if (access) mixEntry(ctx, p) else null
-            val c = e?.let { Media.controllerFor(ctx, it.pkg) }
-            val playing = c != null && Media.isPlaying(c)
-            if (e?.art != null) rv.setImageViewUri(MIX_ART[i], e.art)
-            else rv.setImageViewResource(MIX_ART[i], R.drawable.art_placeholder)
-            rv.setImageViewResource(MIX[i], if (playing) R.drawable.ic_pause_big else R.drawable.ic_play_big)
-            val what = e?.let { listOfNotNull(it.title, it.sub).joinToString(", ") } ?: "nothing yet"
-            rv.setContentDescription(MIX[i], "${p.label}: $what. ${if (playing) "Pause" else "Play"}")
-            val tap = when {
-                !access -> setup
-                e == null -> openApp(ctx, p.sources.first()) ?: setup
-                c != null -> mixBroadcast(ctx, e.pkg)
-                else -> playTap(
-                    ctx, 400 + i, e.pkg, true, e.mediaId,
-                    listOfNotNull(e.title, e.sub).joinToString(" "), Bundle(),
-                )
-            }
-            rv.setOnClickPendingIntent(MIX[i], tap)
+    /** Every remembered item of every type, newest first. */
+    private fun allEntries(ctx: Context): List<MixEntry> {
+        val music = MusicStore.recents(ctx).mapIndexed { i, s ->
+            MixEntry(Profile.MUSIC, "m:${s.key}", Sources.YTMUSIC.pkg, s.title, s.artist, s.album,
+                MusicStore.coverUri(ctx, s), null, s.lastPlayed, i == 0)
         }
-        ClaudeLink.bind(ctx, rv, R.id.claude)
+        fun items(p: Profile, store: BookStore) = store.recents(ctx).map { b ->
+            MixEntry(p, "${p.name}:${b.key}", b.pkg, b.title, b.chapter, b.author, store.coverUri(ctx, b), b.mediaId,
+                b.lastPlayed, store.current(ctx, b.pkg)?.key == b.key)
+        }
+        return (music + items(Profile.BOOKS, Store) + items(Profile.PODCASTS, PodcastStore))
+            .sortedByDescending { it.lastPlayed }
+    }
+
+    /** What's playing now (any type), else whatever played last. */
+    private fun nowEntry(ctx: Context, all: List<MixEntry>): MixEntry? {
+        val playingPkgs = Media.controllers(ctx).filter { Media.isPlaying(it) }.map { it.packageName }.toSet()
+        return all.firstOrNull { it.appCurrent && it.pkg in playingPkgs } ?: all.firstOrNull()
+    }
+
+    private fun buildMix(ctx: Context): RemoteViews {
+        val all = if (Media.hasAccess(ctx)) allEntries(ctx) else emptyList()
+        return RemoteViews(
+            MixKind.values().associate { k ->
+                k.size to fillMix(ctx, RemoteViews(ctx.packageName, k.layout), k, all)
+            }
+        )
+    }
+
+    /** Play/pause button for one item: pause or resume in place if its app runs, else ask the app to play it. */
+    private fun setMixButton(ctx: Context, rv: RemoteViews, playId: Int, artId: Int, e: MixEntry?, p: Profile?, code: Int, setup: PendingIntent) {
+        val c = e?.let { Media.controllerFor(ctx, it.pkg) }
+        val playing = c != null && Media.isPlaying(c) && e?.appCurrent == true
+        if (e?.art != null) rv.setImageViewUri(artId, e.art)
+        else rv.setImageViewResource(artId, R.drawable.art_placeholder)
+        rv.setImageViewResource(playId, if (playing) R.drawable.ic_pause_big else R.drawable.ic_play_big)
+        val label = (e?.profile ?: p)?.label ?: "Media"
+        val what = e?.let { listOfNotNull(it.title, it.line2).joinToString(", ") } ?: "nothing yet"
+        rv.setContentDescription(playId, "$label: $what. ${if (playing) "Pause" else "Play"}")
+        val tap = when {
+            !Media.hasAccess(ctx) -> setup
+            e == null -> p?.let { openApp(ctx, it.sources.first()) } ?: setup
+            c != null && e.appCurrent -> mixBroadcast(ctx, e.pkg)
+            else -> mixPlayTap(ctx, e, code)
+        }
+        rv.setOnClickPendingIntent(playId, tap)
+    }
+
+    /** Ask the item's app to play it without opening (resume if it's what the app last had). */
+    private fun mixPlayTap(ctx: Context, e: MixEntry, code: Int): PendingIntent {
+        val search = Bundle().apply {
+            if (e.profile == Profile.MUSIC) putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
+            putString(MediaStore.EXTRA_MEDIA_TITLE, e.title)
+            val by = if (e.profile == Profile.MUSIC) e.line2 else e.line3
+            by?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
+        }
+        val by = if (e.profile == Profile.MUSIC) e.line2 else e.line3
+        return playTap(ctx, code, e.pkg, e.appCurrent, e.mediaId, listOfNotNull(e.title, by).joinToString(" "), search)
+    }
+
+    private fun fillMix(ctx: Context, rv: RemoteViews, k: MixKind, all: List<MixEntry>): RemoteViews {
+        val setup = activity(ctx, 1, Intent(ctx, MainActivity::class.java))
+        val now = nowEntry(ctx, all)
+
+        if (k.single) setMixButton(ctx, rv, R.id.mix0_play, R.id.mix0_art, now, null, 400, setup)
+
+        // The three type buttons: the latest item of each type.
+        val shown = mutableSetOf<String>()
+        if (k.buttons) {
+            for ((i, p) in MIX_ORDER.withIndex()) {
+                val e = all.firstOrNull { it.profile == p }
+                e?.let { shown.add(it.key) }
+                setMixButton(ctx, rv, MIX[i], MIX_ART[i], e, p, 401 + i, setup)
+            }
+        } else {
+            now?.let { shown.add(it.key) }
+        }
+
+        if (k.info) {
+            val open = now?.let { e -> Sources.byPkg(e.pkg)?.let { openApp(ctx, it) } } ?: setup
+            rv.setOnClickPendingIntent(R.id.info, if (Media.hasAccess(ctx)) open else setup)
+            val icon = now?.let { appIcon(ctx, it.pkg) }
+            if (icon != null) {
+                rv.setImageViewBitmap(R.id.badge, icon)
+                rv.setViewVisibility(R.id.badge, View.VISIBLE)
+                rv.setContentDescription(R.id.badge, "Open ${Sources.byPkg(now?.pkg)?.label}")
+                rv.setOnClickPendingIntent(R.id.badge, open)
+            } else {
+                rv.setViewVisibility(R.id.badge, View.GONE)
+            }
+            rv.setTextViewText(
+                R.id.title,
+                now?.title ?: if (Media.hasAccess(ctx)) "Nothing played yet" else "Set up Now Playing",
+            )
+            textOrGone(rv, R.id.line2, now?.line2 ?: if (!Media.hasAccess(ctx)) "Tap to allow access" else null)
+            textOrGone(rv, R.id.line3, now?.line3)
+            // Time left for what's playing, when its app is running and reports a length.
+            val c = now?.takeIf { it.appCurrent }?.let { Media.controllerFor(ctx, it.pkg) }
+            val timeModel = Model(
+                Profile.BOOKS, Sources.LIBBY, false, c != null, c?.let { Media.isPlaying(it) } ?: false, "", null, null,
+                null, c?.let { Media.positionMs(it) } ?: 0L, c?.let { Media.duration(it) } ?: 0L,
+                c?.let { Media.speed(it) } ?: 1f, null, false, false, false, false, false,
+                emptyList(), emptyList(), emptyList(), emptyList(),
+            )
+            setTimeLeft(rv, timeModel)
+        }
+
+        if (k.recents > 0) {
+            val rest = all.filter { it.key !in shown }
+            rv.setViewVisibility(R.id.mrecent_label, if (rest.isEmpty()) View.GONE else View.VISIBLE)
+            for (i in 0 until k.recents) {
+                val e = rest.getOrNull(i)
+                if (e == null) {
+                    rv.setViewVisibility(MREC[i], View.GONE)
+                    continue
+                }
+                rv.setViewVisibility(MREC[i], View.VISIBLE)
+                if (e.art != null) rv.setImageViewUri(MREC_ART[i], e.art)
+                else rv.setImageViewResource(MREC_ART[i], R.drawable.art_placeholder)
+                rv.setContentDescription(MREC_ART[i], e.title)
+                rv.setOnClickPendingIntent(MREC[i], mixPlayTap(ctx, e, 500 + i))
+                if (k.recentRows) {
+                    rv.setTextViewText(MREC_TITLE[i], e.title)
+                    rv.setTextViewText(MREC_SUB[i], listOfNotNull(e.line2, e.line3).joinToString(" · "))
+                    appIcon(ctx, e.pkg)?.let {
+                        rv.setImageViewBitmap(MREC_ICON[i], it)
+                        rv.setViewVisibility(MREC_ICON[i], View.VISIBLE)
+                    }
+                }
+            }
+        }
+
+        if (k.info || k.sideLinks) ClaudeLink.bind(ctx, rv, R.id.claude)
         bindUpdate(ctx, rv)
         return rv
     }
+
+    /** Same rule Android uses to pick a layout (for the setup screen's size list). */
+    private fun bestFitMix(w: Float, h: Float): MixKind =
+        MixKind.values().filter { it.size.width <= w && it.size.height <= h }.minByOrNull {
+            val dw = w - it.size.width
+            val dh = h - it.size.height
+            dw * dw + dh * dh
+        } ?: MixKind.TILE
 
     private fun mixBroadcast(ctx: Context, pkg: String): PendingIntent {
         val intent = Intent(ctx, NowPlayingWidget::class.java)

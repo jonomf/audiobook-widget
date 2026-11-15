@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Now Playing: latest music, audiobook and podcast, one square button each (play/pause on the art). -->
+<!-- Now Playing 3x1: one button each for the latest music, audiobook, podcast. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -30,6 +30,7 @@
                 android:id="@+id/mix1_play"
                 style="@style/PlayOverlay" />
         </FrameLayout>
+
         <FrameLayout
             android:id="@+id/mix2"
             android:layout_width="0dp"
@@ -47,6 +48,7 @@
                 android:id="@+id/mix2_play"
                 style="@style/PlayOverlay" />
         </FrameLayout>
+
         <FrameLayout
             android:id="@+id/mix3"
             android:layout_width="0dp"

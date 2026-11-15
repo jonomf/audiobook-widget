@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Now Playing 1x1: the latest item of any type, big play/pause on the art. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:padding="4dp">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center">
+
+        <ImageView
+            android:id="@+id/mix0_art"
+            style="@style/Cover" />
+
+        <ImageView
+            android:id="@+id/mix0_play"
+            style="@style/PlayOverlay" />
+        <ImageView
+            android:id="@+id/update"
+            style="@style/UpdateSymbol"
+            android:layout_gravity="top|end"
+            android:layout_margin="4dp" />
+    </FrameLayout>
+</FrameLayout>

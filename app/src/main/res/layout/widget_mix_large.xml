@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Now Playing 3-4x2: buttons + what's playing, then recent covers from all types. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/mix1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/mix1_art"
+                style="@style/Cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/mix1_play"
+                style="@style/PlayOverlay" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/mix2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp">
+
+            <ImageView
+                android:id="@+id/mix2_art"
+                style="@style/Cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/mix2_play"
+                style="@style/PlayOverlay" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/mix3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp">
+
+            <ImageView
+                android:id="@+id/mix3_art"
+                style="@style/Cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/mix3_play"
+                style="@style/PlayOverlay" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/info"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/badge"
+                    style="@style/Badge" />
+
+                <TextView
+                    android:id="@+id/title"
+                    style="@style/Title"
+                    android:maxLines="2" />
+
+                <ImageView
+                    android:id="@+id/claude"
+                    style="@style/ClaudeLink" />
+
+                <ImageView
+                    android:id="@+id/update"
+                    style="@style/UpdateSymbol" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/line2"
+                style="@style/Chapter"
+                android:maxLines="1" />
+
+            <Chronometer
+                android:id="@+id/time"
+                style="@style/TimeLeft" />
+
+            <TextView
+                android:id="@+id/time_static"
+                style="@style/TimeLeftStatic" />
+
+            <TextView
+                android:id="@+id/line3"
+                style="@style/Author" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/mrecent_label"
+        style="@style/SectionLabel"
+        android:text="Recent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/mrec1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec1_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec2"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec2_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec3"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec3_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec4"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec4_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec5"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec5_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec6"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec6_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec7"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/mrec7_art"
+                style="@style/RecentThumb" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

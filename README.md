@@ -5,9 +5,12 @@ One app, home-screen widgets that look and behave the same at every size:
 - **Music**: whatever **YouTube Music** is playing (merged in from jonomf/ytmusic-widget).
 - **Podcasts**: whatever **Pocket Casts** is playing. Same model as audiobooks: the show plays the
   role of the book, the episode the chapter.
-- **Now Playing**: one square button each for your latest **music, audiobook and podcast**: the art
-  with a big play/pause on it. Tap to pause or resume right there (if the app is closed, it's asked
-  to resume without opening). A row of three; resize it tall for a column.
+- **Now Playing**: your latest **music, audiobook and podcast**, each as its art with a big
+  play/pause on it (tap to pause or resume right there; a closed app is asked to resume without
+  opening). It adapts to any size:
+  1×1 the latest item only · 2×1 latest item + its info · 3×1 the three buttons · **4×1** (default)
+  the three buttons + what's playing (tap: open its app) · 2×2 buttons + info in a grid · tall: a
+  column · 3–4×2 adds recent covers from all types · 4×3+ a recent list with app icons.
 
 They differ in content and in the controls of the bigger sizes / full panel:
 

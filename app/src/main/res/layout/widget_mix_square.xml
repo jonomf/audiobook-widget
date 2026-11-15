@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Now Playing 2x2: music and audiobook on top; podcast and what's playing below. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/mix1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/mix1_art"
+                style="@style/Cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/mix1_play"
+                style="@style/PlayOverlay" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/mix2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp">
+
+            <ImageView
+                android:id="@+id/mix2_art"
+                style="@style/Cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/mix2_play"
+                style="@style/PlayOverlay" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/mix3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/mix3_art"
+                style="@style/Cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/mix3_play"
+                style="@style/PlayOverlay" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/info"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/badge"
+                    style="@style/Badge" />
+
+                <TextView
+                    android:id="@+id/title"
+                    style="@style/Title"
+                    android:maxLines="2" />
+
+                <ImageView
+                    android:id="@+id/claude"
+                    style="@style/ClaudeLink" />
+
+                <ImageView
+                    android:id="@+id/update"
+                    style="@style/UpdateSymbol" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/line2"
+                style="@style/Chapter"
+                android:maxLines="1" />
+
+            <Chronometer
+                android:id="@+id/time"
+                style="@style/TimeLeft" />
+
+            <TextView
+                android:id="@+id/time_static"
+                style="@style/TimeLeftStatic" />
+
+            <TextView
+                android:id="@+id/line3"
+                style="@style/Author" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
