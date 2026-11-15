@@ -9,8 +9,9 @@ One app, home-screen widgets that look and behave the same at every size:
   play/pause on it (tap to pause or resume right there; a closed app is asked to resume without
   opening). It adapts to any size:
   1×1 the latest item only · 2×1 latest item + its info · 3×1 the three buttons · **4×1** (default)
-  the three buttons + what's playing (tap: open its app) · 2×2 buttons + info in a grid · tall: a
-  column · 3–4×2 adds recent covers from all types · 4×3+ a recent list with app icons.
+  the three buttons + what's playing (tap: open its app) · 2×2 buttons + info in a grid · 2×3+ adds a
+  recent list · 1-wide tall: a
+  column · 3–4×2 adds recent covers from all types (albums and mixes for music) · 4×3+ a recent list with app icons.
 
 They differ in content and in the controls of the bigger sizes / full panel:
 

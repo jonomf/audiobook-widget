@@ -688,6 +688,22 @@ L['widget_mix_square'] = root('LinearLayout',
 
 ''' + ind(mix_button(3) + '\n' + mix_info(margin='5dp'), 4) + '</LinearLayout>\n',
     f'{NP} 2x2: music and audiobook on top; podcast and what\'s playing below.', orient='vertical', pad='6dp')
+L['widget_mix_tall'] = root('LinearLayout',
+    '''<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:orientation="horizontal">
+
+''' + ind(mix_button(1) + '\n' + mix_button(2, margin='marginStart'), 4) + '''</LinearLayout>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:layout_marginTop="5dp"
+    android:orientation="horizontal">
+
+''' + ind(mix_button(3) + '\n' + mix_info(margin='5dp'), 4) + '</LinearLayout>\n\n' + mix_rows(5),
+    f'{NP} 2x3+: the 2x2 buttons + what\'s playing, then recent items from all types.', orient='vertical', pad='6dp')
 L['widget_mix_large'] = root('LinearLayout', buttons_row(True, height='0dp', weight='1') + '\n' + mix_thumbs(7),
     f'{NP} 3-4x2: buttons + what\'s playing, then recent covers from all types.', orient='vertical', pad='8dp')
 L['widget_mix_xl'] = root('LinearLayout', buttons_row(True, height='96dp') + '\n' + mix_rows(5),

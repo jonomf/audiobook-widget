@@ -534,6 +534,8 @@ object WidgetRenderer {
         ROW_INFO(R.layout.widget_mix_l, SizeF(320f, 50f), "3 buttons + what's playing", buttons = true, info = true),
         COLUMN(R.layout.widget_mix_v, SizeF(50f, 150f), "3 buttons stacked", buttons = true, sideLinks = true),
         SQUARE(R.layout.widget_mix_square, SizeF(150f, 150f), "3 buttons + what's playing, 2×2", buttons = true, info = true),
+        TALL(R.layout.widget_mix_tall, SizeF(150f, 250f), "2×2 buttons + what's playing, recent list",
+            buttons = true, info = true, recents = 5, recentRows = true),
         LARGE(R.layout.widget_mix_large, SizeF(260f, 150f), "buttons, what's playing, recent covers",
             buttons = true, info = true, recents = 7),
         XL(R.layout.widget_mix_xl, SizeF(260f, 250f), "buttons, what's playing, recent list",
@@ -566,14 +568,22 @@ object WidgetRenderer {
         val lastPlayed: Long,
         /** What that app last had: tapping resumes it rather than searching. */
         val appCurrent: Boolean,
+        /** Music recents are albums and mixes (never lone songs); set for those. */
+        val group: MusicStore.Group? = null,
     )
 
     /** Every remembered item of every type, newest first. */
     private fun allEntries(ctx: Context): List<MixEntry> {
-        val music = MusicStore.recents(ctx).mapIndexed { i, s ->
+        // Music: the current song (for its button), then albums and mixes for the recent lists.
+        val song = MusicStore.recents(ctx).firstOrNull()?.let { s ->
             MixEntry(Profile.MUSIC, "m:${s.key}", Sources.YTMUSIC.pkg, s.title, s.artist, s.album,
-                MusicStore.coverUri(ctx, s), null, s.lastPlayed, i == 0)
+                MusicStore.coverUri(ctx, s), null, s.lastPlayed, true)
         }
+        val groups = MusicStore.otherGroups(ctx).map { g ->
+            MixEntry(Profile.MUSIC, "g:${g.key}", Sources.YTMUSIC.pkg, g.title, g.artist, null,
+                MusicStore.coverUri(ctx, g.coverKey), null, g.lastPlayed, false, g)
+        }
+        val music = listOfNotNull(song) + groups
         fun items(p: Profile, store: BookStore) = store.recents(ctx).map { b ->
             MixEntry(p, "${p.name}:${b.key}", b.pkg, b.title, b.chapter, b.author, store.coverUri(ctx, b), b.mediaId,
                 b.lastPlayed, store.current(ctx, b.pkg)?.key == b.key)
@@ -618,6 +628,19 @@ object WidgetRenderer {
 
     /** Ask the item's app to play it without opening (resume if it's what the app last had). */
     private fun mixPlayTap(ctx: Context, e: MixEntry, code: Int): PendingIntent {
+        e.group?.let { g ->
+            val search = Bundle().apply {
+                if (g.kind == MusicStore.GROUP_MIX) {
+                    putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE)
+                    putString(MediaStore.EXTRA_MEDIA_PLAYLIST, g.title)
+                } else {
+                    putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)
+                    putString(MediaStore.EXTRA_MEDIA_ALBUM, g.title)
+                }
+                g.artist?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
+            }
+            return playTap(ctx, code, e.pkg, false, null, listOfNotNull(g.title, g.artist).joinToString(" "), search)
+        }
         val search = Bundle().apply {
             if (e.profile == Profile.MUSIC) putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
             putString(MediaStore.EXTRA_MEDIA_TITLE, e.title)
@@ -638,7 +661,7 @@ object WidgetRenderer {
         val shown = mutableSetOf<String>()
         if (k.buttons) {
             for ((i, p) in MIX_ORDER.withIndex()) {
-                val e = all.firstOrNull { it.profile == p }
+                val e = all.firstOrNull { it.profile == p && it.group == null }
                 e?.let { shown.add(it.key) }
                 setMixButton(ctx, rv, MIX[i], MIX_ART[i], e, p, 401 + i, setup)
             }
