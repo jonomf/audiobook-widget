@@ -28,14 +28,19 @@ class NowPlayingWidget : AppWidgetProvider() {
 
     override fun onReceive(ctx: Context, intent: Intent) {
         super.onReceive(ctx, intent)
-        if (intent.action != ACTION_TOGGLE_APP) return
         val pkg = intent.data?.schemeSpecificPart ?: return
         val c = Media.controllerFor(ctx, pkg)
-        if (c != null) Media.togglePlay(c) else WidgetRenderer.renderAll(ctx)
+        when (intent.action) {
+            ACTION_TOGGLE_APP -> if (c != null) Media.togglePlay(c) else WidgetRenderer.renderAll(ctx)
+            ACTION_BOOKMARK_APP -> if (c != null) MediaWidget.bookmark(ctx, c)
+            ACTION_PLUS30_APP -> if (c != null) Media.seekBy(c, 30_000L)
+        }
     }
 
     companion object {
         const val ACTION_TOGGLE_APP = "com.jono.audiobookwidget.TOGGLE_APP"
+        const val ACTION_BOOKMARK_APP = "com.jono.audiobookwidget.BOOKMARK_APP"
+        const val ACTION_PLUS30_APP = "com.jono.audiobookwidget.PLUS30_APP"
     }
 }
 
@@ -88,33 +93,6 @@ abstract class MediaWidget(private val profile: Profile) : AppWidgetProvider() {
         if (c != null) action(c) else WidgetRenderer.renderAll(ctx)
     }
 
-    /** Saves a bookmark here, and in the app too if it offers a bookmark action. */
-    private fun bookmark(ctx: Context, c: MediaController) {
-        val pos = Media.positionMs(c)
-        if (pos == null) {
-            Toast.makeText(ctx, "Couldn't bookmark: the app didn't report a position", Toast.LENGTH_LONG).show()
-            return
-        }
-        val appAction = Media.bookmarkAction(c)
-        appAction?.let { c.transportControls.sendCustomAction(it.action, null) }
-        val book = Store.current(ctx, c.packageName)
-        val source = Sources.byPkg(c.packageName)?.label ?: "the app"
-        Bookmarks.add(
-            ctx,
-            Bookmarks.Mark(
-                bookKey = book?.key ?: "${c.packageName}|?",
-                chapter = book?.chapter,
-                positionMs = pos,
-                createdAt = System.currentTimeMillis(),
-                inApp = appAction != null,
-            ),
-        )
-        val where = listOfNotNull(book?.chapter, Bookmarks.formatPosition(pos)).joinToString(" · ")
-        val also = if (appAction != null) " (also in $source)" else ""
-        Toast.makeText(ctx, "Bookmarked $where$also", Toast.LENGTH_SHORT).show()
-        WidgetRenderer.renderAll(ctx)
-    }
-
     /** Jumps to a bookmark if its book is the one playing in that app. */
     private fun jump(ctx: Context, c: MediaController, createdAt: Long?) {
         val mark = createdAt?.let { Bookmarks.find(ctx, it) } ?: return
@@ -126,6 +104,33 @@ abstract class MediaWidget(private val profile: Profile) : AppWidgetProvider() {
     }
 
     companion object {
+        /** Saves a bookmark here, and in the app too if it offers a bookmark action. */
+        fun bookmark(ctx: Context, c: MediaController) {
+            val pos = Media.positionMs(c)
+            if (pos == null) {
+                Toast.makeText(ctx, "Couldn't bookmark: the app didn't report a position", Toast.LENGTH_LONG).show()
+                return
+            }
+            val appAction = Media.bookmarkAction(c)
+            appAction?.let { c.transportControls.sendCustomAction(it.action, null) }
+            val book = Store.current(ctx, c.packageName)
+            val source = Sources.byPkg(c.packageName)?.label ?: "the app"
+            Bookmarks.add(
+                ctx,
+                Bookmarks.Mark(
+                    bookKey = book?.key ?: "${c.packageName}|?",
+                    chapter = book?.chapter,
+                    positionMs = pos,
+                    createdAt = System.currentTimeMillis(),
+                    inApp = appAction != null,
+                ),
+            )
+            val where = listOfNotNull(book?.chapter, Bookmarks.formatPosition(pos)).joinToString(" · ")
+            val also = if (appAction != null) " (also in $source)" else ""
+            Toast.makeText(ctx, "Bookmarked $where$also", Toast.LENGTH_SHORT).show()
+            WidgetRenderer.renderAll(ctx)
+        }
+
         const val ACTION_PLAY_PAUSE = "com.jono.audiobookwidget.PLAY_PAUSE"
         const val ACTION_BACK = "com.jono.audiobookwidget.BACK"
         const val ACTION_FWD = "com.jono.audiobookwidget.FWD"

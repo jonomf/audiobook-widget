@@ -117,6 +117,17 @@ object Media {
     fun bookmarkAction(c: MediaController): PlaybackState.CustomAction? =
         customActions(c).firstOrNull { "${it.action} ${it.name}".contains("bookmark", ignoreCase = true) }
 
+    /** Exactly [deltaMs] forward (or back) when the app allows seeking; otherwise its own skip. */
+    fun seekBy(c: MediaController, deltaMs: Long) {
+        val pos = positionMs(c)
+        if (pos != null && supports(c, PlaybackState.ACTION_SEEK_TO)) {
+            var target = (pos + deltaMs).coerceAtLeast(0L)
+            val d = duration(c)
+            if (d > 0L) target = target.coerceAtMost(d)
+            c.transportControls.seekTo(target)
+        } else if (deltaMs >= 0) c.transportControls.fastForward() else c.transportControls.rewind()
+    }
+
     /** 1× → 1.25× → 1.5× → 1.75× → 2× → 1×. */
     fun cycleSpeed(c: MediaController) {
         val speeds = floatArrayOf(1f, 1.25f, 1.5f, 1.75f, 2f)

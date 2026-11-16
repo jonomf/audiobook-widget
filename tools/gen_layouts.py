@@ -5,7 +5,7 @@ sizes stay consistent. Both widgets (Audiobooks, Music) use these same layouts; 
 only the views that apply. Edit here, then run:  python3 tools/gen_layouts.py
 
 View ids the renderer relies on:
-  art, play, content, badge, title, claude, update, line2, line3  (all text layouts)
+  art, play, content, badge, title, update, line2, line3          (all text layouts)
   time, time_static                                                (strip "time left"; elapsed in time_row)
   up_next, time_row, progress, duration                            (big sizes)
   prev, back, fwd, next, speed, bookmark, action1..4               (controls)
@@ -75,14 +75,7 @@ def cover_plain(width='wrap_content', height='match_parent', gravity=None, weigh
 def text_col(title_lines=1, line2_lines=1, time=False, width='0dp', height='match_parent', weight='1',
              margin='10dp', gravity='center_vertical'):
     """[app icon] title [update] / line2 (chapter | artist) / time left / line3 (author | album)."""
-    t = '''
-<Chronometer
-    android:id="@+id/time"
-    style="@style/TimeLeft" />
-
-<TextView
-    android:id="@+id/time_static"
-    style="@style/TimeLeftStatic" />''' if time else ''
+    t = ''  # time left dropped from strips: Jono finds title/details more useful than time
     hw = f'\n    android:layout_weight="{weight}"' if weight else ''
     ms = f'\n    android:layout_marginStart="{margin}"' if margin else ''
     return f'''<LinearLayout
@@ -107,9 +100,6 @@ def text_col(title_lines=1, line2_lines=1, time=False, width='0dp', height='matc
             style="@style/Title"
             android:maxLines="{title_lines}" />
 
-        <ImageView
-            android:id="@+id/claude"
-            style="@style/ClaudeLink" />
 
         <ImageView
             android:id="@+id/update"
@@ -120,7 +110,7 @@ def text_col(title_lines=1, line2_lines=1, time=False, width='0dp', height='matc
         android:id="@+id/line2"
         style="@style/Chapter"
         android:maxLines="{line2_lines}" />
-{ind(t, 4) if time else ''}
+
     <TextView
         android:id="@+id/line3"
         style="@style/Author" />
@@ -476,7 +466,9 @@ def mix_single(update=False):
 
 
 def mix_info(w='0dp', h='match_parent', weight='1', margin='8dp', margin_side='marginStart'):
-    """What's playing (or played last): [app icon] title, line 2, time left, line 3. Tap: open its app."""
+    """What's playing (or played last), as dense as it gets: title (2 lines) with a small action
+    (bookmark for audiobooks, +30s for podcasts) and the update symbol, then line 2 and line 3.
+    Tap the text: open its app."""
     wt = f'\n    android:layout_weight="{weight}"' if weight else ''
     m = f'\n    android:layout_{margin_side}="{margin}"' if margin else ''
     return f'''<LinearLayout
@@ -489,21 +481,26 @@ def mix_info(w='0dp', h='match_parent', weight='1', margin='8dp', margin_side='m
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/badge"
-            style="@style/Badge" />
 
         <TextView
             android:id="@+id/title"
             style="@style/Title"
-            android:maxLines="2" />
+            android:maxLines="2"
+            android:textSize="13sp" />
 
         <ImageView
-            android:id="@+id/claude"
-            style="@style/ClaudeLink" />
+            android:id="@+id/info_bookmark"
+            style="@style/InfoAction"
+            android:contentDescription="Bookmark"
+            android:src="@drawable/ic_bookmark" />
+
+        <TextView
+            android:id="@+id/info_plus30"
+            style="@style/InfoChip"
+            android:contentDescription="Forward 30 seconds"
+            android:text="+30" />
 
         <ImageView
             android:id="@+id/update"
@@ -513,19 +510,13 @@ def mix_info(w='0dp', h='match_parent', weight='1', margin='8dp', margin_side='m
     <TextView
         android:id="@+id/line2"
         style="@style/Chapter"
-        android:maxLines="1" />
-
-    <Chronometer
-        android:id="@+id/time"
-        style="@style/TimeLeft" />
-
-    <TextView
-        android:id="@+id/time_static"
-        style="@style/TimeLeftStatic" />
+        android:maxLines="2"
+        android:textSize="11.5sp" />
 
     <TextView
         android:id="@+id/line3"
-        style="@style/Author" />
+        style="@style/Author"
+        android:textSize="10.5sp" />
 </LinearLayout>
 '''
 
@@ -537,10 +528,6 @@ SIDE_LINKS = '''<LinearLayout
     android:gravity="center"
     android:orientation="vertical">
 
-    <ImageView
-        android:id="@+id/claude"
-        style="@style/ClaudeLink"
-        android:layout_marginStart="0dp" />
 
     <ImageView
         android:id="@+id/update"
@@ -660,10 +647,6 @@ L['widget_mix_v'] = root('LinearLayout',
     android:gravity="center"
     android:orientation="horizontal">
 
-    <ImageView
-        android:id="@+id/claude"
-        style="@style/ClaudeLink"
-        android:layout_marginStart="0dp" />
 
     <ImageView
         android:id="@+id/update"

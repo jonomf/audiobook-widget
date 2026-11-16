@@ -349,7 +349,6 @@ object WidgetRenderer {
         bindUpdate(ctx, rv)
 
         if (kind.text) {
-            ClaudeLink.bind(ctx, rv, R.id.claude)
             rv.setOnClickPendingIntent(R.id.content, mainTap)
             val icon = appIcon(ctx, m.source.pkg)
             if (icon != null) {
@@ -369,7 +368,6 @@ object WidgetRenderer {
             textOrGone(rv, R.id.line3, m.line3)
         }
 
-        if (kind.timeLeft) setTimeLeft(rv, m)
 
         if (kind.player) {
             setPlayerTimes(rv, m)
@@ -672,30 +670,27 @@ object WidgetRenderer {
         if (k.info) {
             val open = now?.let { e -> Sources.byPkg(e.pkg)?.let { openApp(ctx, it) } } ?: setup
             rv.setOnClickPendingIntent(R.id.info, if (Media.hasAccess(ctx)) open else setup)
-            val icon = now?.let { appIcon(ctx, it.pkg) }
-            if (icon != null) {
-                rv.setImageViewBitmap(R.id.badge, icon)
-                rv.setViewVisibility(R.id.badge, View.VISIBLE)
-                rv.setContentDescription(R.id.badge, "Open ${Sources.byPkg(now?.pkg)?.label}")
-                rv.setOnClickPendingIntent(R.id.badge, open)
-            } else {
-                rv.setViewVisibility(R.id.badge, View.GONE)
-            }
             rv.setTextViewText(
                 R.id.title,
                 now?.title ?: if (Media.hasAccess(ctx)) "Nothing played yet" else "Set up Now Playing",
             )
             textOrGone(rv, R.id.line2, now?.line2 ?: if (!Media.hasAccess(ctx)) "Tap to allow access" else null)
             textOrGone(rv, R.id.line3, now?.line3)
-            // Time left for what's playing, when its app is running and reports a length.
+            // One small action for what's playing: bookmark (audiobooks) or +30s (podcasts).
             val c = now?.takeIf { it.appCurrent }?.let { Media.controllerFor(ctx, it.pkg) }
-            val timeModel = Model(
-                Profile.BOOKS, Sources.LIBBY, false, c != null, c?.let { Media.isPlaying(it) } ?: false, "", null, null,
-                null, c?.let { Media.positionMs(it) } ?: 0L, c?.let { Media.duration(it) } ?: 0L,
-                c?.let { Media.speed(it) } ?: 1f, null, false, false, false, false, false,
-                emptyList(), emptyList(), emptyList(), emptyList(),
-            )
-            setTimeLeft(rv, timeModel)
+            val pkg = now?.pkg
+            if (c != null && pkg != null && now?.profile == Profile.BOOKS) {
+                rv.setViewVisibility(R.id.info_bookmark, View.VISIBLE)
+                rv.setOnClickPendingIntent(R.id.info_bookmark, mixBroadcast(ctx, pkg, NowPlayingWidget.ACTION_BOOKMARK_APP))
+            } else {
+                rv.setViewVisibility(R.id.info_bookmark, View.GONE)
+            }
+            if (c != null && pkg != null && now?.profile == Profile.PODCASTS) {
+                rv.setViewVisibility(R.id.info_plus30, View.VISIBLE)
+                rv.setOnClickPendingIntent(R.id.info_plus30, mixBroadcast(ctx, pkg, NowPlayingWidget.ACTION_PLUS30_APP))
+            } else {
+                rv.setViewVisibility(R.id.info_plus30, View.GONE)
+            }
         }
 
         if (k.recents > 0) {
@@ -723,7 +718,6 @@ object WidgetRenderer {
             }
         }
 
-        if (k.info || k.sideLinks) ClaudeLink.bind(ctx, rv, R.id.claude)
         bindUpdate(ctx, rv)
         return rv
     }
@@ -736,9 +730,9 @@ object WidgetRenderer {
             dw * dw + dh * dh
         } ?: MixKind.TILE
 
-    private fun mixBroadcast(ctx: Context, pkg: String): PendingIntent {
+    private fun mixBroadcast(ctx: Context, pkg: String, action: String = NowPlayingWidget.ACTION_TOGGLE_APP): PendingIntent {
         val intent = Intent(ctx, NowPlayingWidget::class.java)
-            .setAction(NowPlayingWidget.ACTION_TOGGLE_APP)
+            .setAction(action)
             .setData(Uri.fromParts("mw", pkg, null))
         return PendingIntent.getBroadcast(
             ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT

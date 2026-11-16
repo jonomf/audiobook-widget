@@ -58,20 +58,11 @@ object ClaudeLink {
             setTypeface(typeface, Typeface.BOLD)
             setPadding(0, dp(24), 0, dp(6))
         })
-        col.addView(Switch(a).apply {
-            text = "Show a link on the widget"
-            textSize = 16f
-            isChecked = shown(a)
-            setOnCheckedChangeListener { _, on ->
-                setShown(a, on)
-                redraw()
-            }
-        })
         col.addView(TextView(a).apply {
-            text = "A small ✦ next to the title opens the Claude Code session that builds this app."
+            text = "Opens the Claude Code session that builds this app."
             textSize = 13f
             alpha = 0.7f
-            setPadding(0, dp(4), 0, dp(8))
+            setPadding(0, 0, 0, dp(8))
         })
         col.addView(Button(a).apply {
             text = "Open Claude session"

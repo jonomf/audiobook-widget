@@ -46,9 +46,6 @@
                 style="@style/Title"
                 android:maxLines="1" />
 
-            <ImageView
-                android:id="@+id/claude"
-                style="@style/ClaudeLink" />
 
             <ImageView
                 android:id="@+id/update"
@@ -59,13 +56,6 @@
             android:id="@+id/line2"
             style="@style/Chapter"
             android:maxLines="1" />
-        <Chronometer
-            android:id="@+id/time"
-            style="@style/TimeLeft" />
-
-        <TextView
-            android:id="@+id/time_static"
-            style="@style/TimeLeftStatic" />
 
         <TextView
             android:id="@+id/line3"

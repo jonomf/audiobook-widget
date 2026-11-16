@@ -288,4 +288,23 @@
         <item name="android:contentDescription">Claude session</item>
         <item name="android:visibility">gone</item>
     </style>
+
+    <!-- Now Playing info: one small action beside the title (bookmark | +30s). -->
+    <style name="InfoAction">
+        <item name="android:layout_width">22dp</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:padding">3dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="InfoChip" parent="SpeedChip">
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:paddingStart">5dp</item>
+        <item name="android:paddingEnd">5dp</item>
+        <item name="android:paddingTop">1dp</item>
+        <item name="android:paddingBottom">1dp</item>
+        <item name="android:textSize">11sp</item>
+    </style>
 </resources>
