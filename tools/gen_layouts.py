@@ -466,29 +466,59 @@ def mix_single(update=False):
 
 
 def mix_info(w='0dp', h='match_parent', weight='1', margin='8dp', margin_side='marginStart'):
-    """What's playing (or played last), as dense as it gets: title (2 lines) with a small action
-    (bookmark for audiobooks, +30s for podcasts) and the update symbol, then line 2 and line 3.
-    Tap the text: open its app."""
+    """What's playing (or played last), as dense as it gets: title (2 lines) + update symbol, then
+    line 2 (2 lines) and line 3 (2 lines). One small action sits in the bottom-right corner:
+    bookmark for audiobooks, +30s for podcasts. Tap the text: open its app."""
     wt = f'\n    android:layout_weight="{weight}"' if weight else ''
     m = f'\n    android:layout_{margin_side}="{margin}"' if margin else ''
-    return f'''<LinearLayout
+    return f'''<FrameLayout
     android:id="@+id/info"
     android:layout_width="{w}"
-    android:layout_height="{h}"{wt}{m}
-    android:gravity="center_vertical"
-    android:orientation="vertical">
+    android:layout_height="{h}"{wt}{m}>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="top"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/title"
+                style="@style/Title"
+                android:maxLines="2"
+                android:textSize="12.5sp" />
+
+            <ImageView
+                android:id="@+id/update"
+                style="@style/UpdateSymbol" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/title"
-            style="@style/Title"
+            android:id="@+id/line2"
+            style="@style/Chapter"
             android:maxLines="2"
-            android:textSize="13sp" />
+            android:textSize="11sp" />
+
+        <!-- Room on the right of the last line for the corner action. -->
+        <TextView
+            android:id="@+id/line3"
+            style="@style/Author"
+            android:layout_marginEnd="24dp"
+            android:maxLines="2"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/info_bookmark"
@@ -501,23 +531,8 @@ def mix_info(w='0dp', h='match_parent', weight='1', margin='8dp', margin_side='m
             style="@style/InfoChip"
             android:contentDescription="Forward 30 seconds"
             android:text="+30" />
-
-        <ImageView
-            android:id="@+id/update"
-            style="@style/UpdateSymbol" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/line2"
-        style="@style/Chapter"
-        android:maxLines="2"
-        android:textSize="11.5sp" />
-
-    <TextView
-        android:id="@+id/line3"
-        style="@style/Author"
-        android:textSize="10.5sp" />
-</LinearLayout>
+</FrameLayout>
 '''
 
 
