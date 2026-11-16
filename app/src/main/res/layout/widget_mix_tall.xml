@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Now Playing 2x3+: the 2x2 buttons + what's playing, then recent items from all types. -->
+<!-- Now Playing 2x3+: the 2x2 buttons + what's playing, then a grid of small recent covers. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -123,184 +123,352 @@
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/mrecent_label"
-        style="@style/SectionLabel"
-        android:text="Recent" />
-
     <LinearLayout
-        android:id="@+id/mrec1"
-        style="@style/RecentRow">
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/mrec1_art"
-            style="@style/RecentRowArt" />
-
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/mrec1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:visibility="invisible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/mrec1_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <ImageView
-                    android:id="@+id/mrec1_icon"
-                    style="@style/RecentIcon" />
+            <ImageView
+                android:id="@+id/mrec2_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <TextView
-                    android:id="@+id/mrec1_title"
-                    style="@style/RecentTitle" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec3_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-            <TextView
-                android:id="@+id/mrec1_sub"
-                style="@style/RecentSub" />
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec4_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
     </LinearLayout>
     <LinearLayout
-        android:id="@+id/mrec2"
-        style="@style/RecentRow">
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/mrec2_art"
-            style="@style/RecentRowArt" />
-
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/mrec5"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:visibility="invisible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/mrec5_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec6"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <ImageView
-                    android:id="@+id/mrec2_icon"
-                    style="@style/RecentIcon" />
+            <ImageView
+                android:id="@+id/mrec6_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec7"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <TextView
-                    android:id="@+id/mrec2_title"
-                    style="@style/RecentTitle" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec7_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec8"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-            <TextView
-                android:id="@+id/mrec2_sub"
-                style="@style/RecentSub" />
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec8_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
     </LinearLayout>
     <LinearLayout
-        android:id="@+id/mrec3"
-        style="@style/RecentRow">
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/mrec3_art"
-            style="@style/RecentRowArt" />
-
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/mrec9"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:visibility="invisible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/mrec9_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec10"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <ImageView
-                    android:id="@+id/mrec3_icon"
-                    style="@style/RecentIcon" />
+            <ImageView
+                android:id="@+id/mrec10_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec11"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <TextView
-                    android:id="@+id/mrec3_title"
-                    style="@style/RecentTitle" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec11_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec12"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-            <TextView
-                android:id="@+id/mrec3_sub"
-                style="@style/RecentSub" />
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec12_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
     </LinearLayout>
     <LinearLayout
-        android:id="@+id/mrec4"
-        style="@style/RecentRow">
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/mrec4_art"
-            style="@style/RecentRowArt" />
-
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/mrec13"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:visibility="invisible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/mrec13_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec14"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <ImageView
-                    android:id="@+id/mrec4_icon"
-                    style="@style/RecentIcon" />
+            <ImageView
+                android:id="@+id/mrec14_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec15"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <TextView
-                    android:id="@+id/mrec4_title"
-                    style="@style/RecentTitle" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec15_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec16"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-            <TextView
-                android:id="@+id/mrec4_sub"
-                style="@style/RecentSub" />
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec16_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
     </LinearLayout>
     <LinearLayout
-        android:id="@+id/mrec5"
-        style="@style/RecentRow">
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/mrec5_art"
-            style="@style/RecentRowArt" />
-
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/mrec17"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:visibility="invisible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/mrec17_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec18"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <ImageView
-                    android:id="@+id/mrec5_icon"
-                    style="@style/RecentIcon" />
+            <ImageView
+                android:id="@+id/mrec18_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec19"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-                <TextView
-                    android:id="@+id/mrec5_title"
-                    style="@style/RecentTitle" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec19_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec20"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
-            <TextView
-                android:id="@+id/mrec5_sub"
-                style="@style/RecentSub" />
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/mrec20_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/mrec21"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:visibility="invisible">
+
+            <ImageView
+                android:id="@+id/mrec21_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec22"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
+
+            <ImageView
+                android:id="@+id/mrec22_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec23"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
+
+            <ImageView
+                android:id="@+id/mrec23_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+        <FrameLayout
+            android:id="@+id/mrec24"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
+
+            <ImageView
+                android:id="@+id/mrec24_art"
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
+        </FrameLayout>
     </LinearLayout>
 </LinearLayout>

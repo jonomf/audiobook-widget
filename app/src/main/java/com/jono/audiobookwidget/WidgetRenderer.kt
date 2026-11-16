@@ -532,23 +532,20 @@ object WidgetRenderer {
         ROW_INFO(R.layout.widget_mix_l, SizeF(320f, 50f), "3 buttons + what's playing", buttons = true, info = true),
         COLUMN(R.layout.widget_mix_v, SizeF(50f, 150f), "3 buttons stacked", buttons = true, sideLinks = true),
         SQUARE(R.layout.widget_mix_square, SizeF(150f, 150f), "3 buttons + what's playing, 2×2", buttons = true, info = true),
-        TALL(R.layout.widget_mix_tall, SizeF(150f, 250f), "2×2 buttons + what's playing, recent list",
-            buttons = true, info = true, recents = 5, recentRows = true),
-        LARGE(R.layout.widget_mix_large, SizeF(260f, 150f), "buttons, what's playing, recent covers",
+        TALL(R.layout.widget_mix_tall, SizeF(150f, 250f), "2×2 buttons + what's playing, recent grid",
+            buttons = true, info = true, recents = 24),
+        LARGE(R.layout.widget_mix_large, SizeF(260f, 150f), "buttons, what's playing, row of recent covers",
             buttons = true, info = true, recents = 7),
-        XL(R.layout.widget_mix_xl, SizeF(260f, 250f), "buttons, what's playing, recent list",
-            buttons = true, info = true, recents = 5, recentRows = true),
+        XL(R.layout.widget_mix_xl, SizeF(260f, 250f), "buttons, what's playing, recent grid",
+            buttons = true, info = true, recents = 56),
     }
 
     private val MIX = intArrayOf(R.id.mix1_play, R.id.mix2_play, R.id.mix3_play)
     private val MIX_ART = intArrayOf(R.id.mix1_art, R.id.mix2_art, R.id.mix3_art)
-    private val MREC = intArrayOf(R.id.mrec1, R.id.mrec2, R.id.mrec3, R.id.mrec4, R.id.mrec5, R.id.mrec6, R.id.mrec7)
-    private val MREC_ART = intArrayOf(
-        R.id.mrec1_art, R.id.mrec2_art, R.id.mrec3_art, R.id.mrec4_art, R.id.mrec5_art, R.id.mrec6_art, R.id.mrec7_art,
-    )
-    private val MREC_ICON = intArrayOf(R.id.mrec1_icon, R.id.mrec2_icon, R.id.mrec3_icon, R.id.mrec4_icon, R.id.mrec5_icon)
-    private val MREC_TITLE = intArrayOf(R.id.mrec1_title, R.id.mrec2_title, R.id.mrec3_title, R.id.mrec4_title, R.id.mrec5_title)
-    private val MREC_SUB = intArrayOf(R.id.mrec1_sub, R.id.mrec2_sub, R.id.mrec3_sub, R.id.mrec4_sub, R.id.mrec5_sub)
+    /** Grid cell N's views (mrecN, mrecN_art); looked up by name since grids vary by size. */
+    private val cellIds = mutableMapOf<String, Int>()
+    private fun cellId(ctx: Context, name: String): Int =
+        cellIds.getOrPut(name) { ctx.resources.getIdentifier(name, "id", ctx.packageName) }
 
     /** Left to right (or top to bottom): music, audiobook, podcast. */
     private val MIX_ORDER = listOf(Profile.MUSIC, Profile.BOOKS, Profile.PODCASTS)
@@ -586,8 +583,16 @@ object WidgetRenderer {
             MixEntry(p, "${p.name}:${b.key}", b.pkg, b.title, b.chapter, b.author, store.coverUri(ctx, b), b.mediaId,
                 b.lastPlayed, store.current(ctx, b.pkg)?.key == b.key)
         }
-        return (music + items(Profile.BOOKS, Store) + items(Profile.PODCASTS, PodcastStore))
-            .sortedByDescending { it.lastPlayed }
+        // Podcasts: one entry per show (the newest episode stands for it), never per episode.
+        val shows = PodcastStore.recents(ctx).map { b ->
+            // With the show reported as the album, title = show and chapter = episode; otherwise
+            // title = episode and author = show.
+            val show = if (b.chapter != null) b.title else (b.author ?: b.title)
+            val episode = b.chapter ?: b.title.takeIf { it != show }
+            MixEntry(Profile.PODCASTS, "PODCASTS:${show.lowercase()}", b.pkg, show, episode, null,
+                PodcastStore.coverUri(ctx, b), b.mediaId, b.lastPlayed, PodcastStore.current(ctx, b.pkg)?.key == b.key)
+        }.distinctBy { it.key }
+        return (music + items(Profile.BOOKS, Store) + shows).sortedByDescending { it.lastPlayed }
     }
 
     /** What's playing now (any type), else whatever played last. */
@@ -693,28 +698,23 @@ object WidgetRenderer {
             }
         }
 
+        // Recent covers from every type (albums/mixes, podcast shows, books), newest first, no words.
+        // Empty cells stay blank so the grid keeps its shape.
         if (k.recents > 0) {
             val rest = all.filter { it.key !in shown }
-            rv.setViewVisibility(R.id.mrecent_label, if (rest.isEmpty()) View.GONE else View.VISIBLE)
             for (i in 0 until k.recents) {
+                val cell = cellId(ctx, "mrec${i + 1}")
+                val art = cellId(ctx, "mrec${i + 1}_art")
                 val e = rest.getOrNull(i)
                 if (e == null) {
-                    rv.setViewVisibility(MREC[i], View.GONE)
+                    rv.setViewVisibility(cell, View.INVISIBLE)
                     continue
                 }
-                rv.setViewVisibility(MREC[i], View.VISIBLE)
-                if (e.art != null) rv.setImageViewUri(MREC_ART[i], e.art)
-                else rv.setImageViewResource(MREC_ART[i], R.drawable.art_placeholder)
-                rv.setContentDescription(MREC_ART[i], e.title)
-                rv.setOnClickPendingIntent(MREC[i], mixPlayTap(ctx, e, 500 + i))
-                if (k.recentRows) {
-                    rv.setTextViewText(MREC_TITLE[i], e.title)
-                    rv.setTextViewText(MREC_SUB[i], listOfNotNull(e.line2, e.line3).joinToString(" · "))
-                    appIcon(ctx, e.pkg)?.let {
-                        rv.setImageViewBitmap(MREC_ICON[i], it)
-                        rv.setViewVisibility(MREC_ICON[i], View.VISIBLE)
-                    }
-                }
+                rv.setViewVisibility(cell, View.VISIBLE)
+                if (e.art != null) rv.setImageViewUri(art, e.art)
+                else rv.setImageViewResource(art, R.drawable.art_placeholder)
+                rv.setContentDescription(art, listOfNotNull(e.profile.label, e.title).joinToString(": "))
+                rv.setOnClickPendingIntent(cell, mixPlayTap(ctx, e, 500 + i))
             }
         }
 

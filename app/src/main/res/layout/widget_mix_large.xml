@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Now Playing 3-4x2: buttons + what's playing, then recent covers from all types. -->
+<!-- Now Playing 3-4x2: buttons + what's playing, then a row of small recent covers (all types). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -118,92 +118,101 @@
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/mrecent_label"
-        style="@style/SectionLabel"
-        android:text="Recent" />
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="40dp"
         android:layout_marginTop="4dp"
         android:orientation="horizontal">
 
         <FrameLayout
             android:id="@+id/mrec1"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec1_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
         <FrameLayout
             android:id="@+id/mrec2"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec2_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
         <FrameLayout
             android:id="@+id/mrec3"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec3_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
         <FrameLayout
             android:id="@+id/mrec4"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec4_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
         <FrameLayout
             android:id="@+id/mrec5"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec5_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
         <FrameLayout
             android:id="@+id/mrec6"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec6_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
         <FrameLayout
             android:id="@+id/mrec7"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:visibility="gone">
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/mrec7_art"
-                style="@style/RecentThumb" />
+                style="@style/RecentThumb"
+                android:layout_width="match_parent" />
         </FrameLayout>
     </LinearLayout>
 </LinearLayout>

@@ -551,79 +551,35 @@ def buttons_row(with_info, height='match_parent', weight=None):
 '''
 
 
-def mix_thumbs(n):
-    items = []
-    for k in range(1, n + 1):
-        m = '' if k == 1 else '\n    android:layout_marginStart="5dp"'
-        items.append(f'''<FrameLayout
+def mix_grid(rows, cols):
+    """A tight grid of small covers, no words: recent albums/mixes, podcast shows and books.
+    Rows that don't fit the widget's height are clipped; empty cells stay blank."""
+    out, k = [], 1
+    for r in range(rows):
+        cells = []
+        for c in range(cols):
+            m = '' if c == 0 else '\n    android:layout_marginStart="4dp"'
+            cells.append(f'''<FrameLayout
     android:id="@+id/mrec{k}"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"{m}
-    android:visibility="gone">
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"{m}
+    android:visibility="invisible">
 
     <ImageView
         android:id="@+id/mrec{k}_art"
-        style="@style/RecentThumb" />
+        style="@style/RecentThumb"
+        android:layout_width="match_parent" />
 </FrameLayout>''')
-    return '''<TextView
-    android:id="@+id/mrecent_label"
-    style="@style/SectionLabel"
-    android:text="Recent" />
-
-<LinearLayout
+            k += 1
+        out.append('''<LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="44dp"
+    android:layout_height="40dp"
     android:layout_marginTop="4dp"
     android:orientation="horizontal">
 
-''' + ind('\n'.join(items), 4) + '''</LinearLayout>
-'''
-
-
-def mix_rows(n):
-    items = []
-    for k in range(1, n + 1):
-        items.append(f'''<LinearLayout
-    android:id="@+id/mrec{k}"
-    style="@style/RecentRow">
-
-    <ImageView
-        android:id="@+id/mrec{k}_art"
-        style="@style/RecentRowArt" />
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/mrec{k}_icon"
-                style="@style/RecentIcon" />
-
-            <TextView
-                android:id="@+id/mrec{k}_title"
-                style="@style/RecentTitle" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/mrec{k}_sub"
-            style="@style/RecentSub" />
-    </LinearLayout>
-</LinearLayout>''')
-    return '''<TextView
-    android:id="@+id/mrecent_label"
-    style="@style/SectionLabel"
-    android:text="Recent" />
-
-''' + '\n'.join(items) + '\n'
+''' + ind('\n'.join(cells), 4) + '</LinearLayout>')
+    return '\n'.join(out) + '\n'
 
 
 NP = 'Now Playing'
@@ -685,12 +641,12 @@ L['widget_mix_tall'] = root('LinearLayout',
     android:layout_marginTop="5dp"
     android:orientation="horizontal">
 
-''' + ind(mix_button(3) + '\n' + mix_info(margin='5dp'), 4) + '</LinearLayout>\n\n' + mix_rows(5),
-    f'{NP} 2x3+: the 2x2 buttons + what\'s playing, then recent items from all types.', orient='vertical', pad='6dp')
-L['widget_mix_large'] = root('LinearLayout', buttons_row(True, height='0dp', weight='1') + '\n' + mix_thumbs(7),
-    f'{NP} 3-4x2: buttons + what\'s playing, then recent covers from all types.', orient='vertical', pad='8dp')
-L['widget_mix_xl'] = root('LinearLayout', buttons_row(True, height='96dp') + '\n' + mix_rows(5),
-    f'{NP} 4x3+: buttons + what\'s playing, then recent items from all types.', orient='vertical', pad='10dp')
+''' + ind(mix_button(3) + '\n' + mix_info(margin='5dp'), 4) + '</LinearLayout>\n\n' + mix_grid(6, 4),
+    f'{NP} 2x3+: the 2x2 buttons + what\'s playing, then a grid of small recent covers.', orient='vertical', pad='6dp')
+L['widget_mix_large'] = root('LinearLayout', buttons_row(True, height='0dp', weight='1') + '\n' + mix_grid(1, 7),
+    f'{NP} 3-4x2: buttons + what\'s playing, then a row of small recent covers (all types).', orient='vertical', pad='8dp')
+L['widget_mix_xl'] = root('LinearLayout', buttons_row(True, height='96dp') + '\n' + mix_grid(7, 8),
+    f'{NP} 4x3+: buttons + what\'s playing, then a grid of small recent covers.', orient='vertical', pad='10dp')
 
 for name, xml in L.items():
     with open(os.path.join(OUT, name + '.xml'), 'w') as f:

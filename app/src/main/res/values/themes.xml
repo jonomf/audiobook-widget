@@ -36,7 +36,6 @@
     <style name="PlayOverlay">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
-        <item name="android:background">@drawable/play_scrim</item>
         <item name="android:scaleType">fitCenter</item>
         <item name="android:src">@drawable/ic_play_big</item>
         <item name="android:contentDescription">Play</item>
