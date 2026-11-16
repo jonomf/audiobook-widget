@@ -2,6 +2,7 @@ package com.jono.audiobookwidget
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Matrix
@@ -44,6 +45,10 @@ class BookStore(
 
         /** lastPlayed marker for books fetched while their app wasn't running. */
         const val RECOVERED = 1L
+
+        /** Cover quality: real cover art vs. a small display icon (possibly the app's logo). */
+        const val WEAK = 1
+        const val STRONG = 2
     }
 
     /** One book. [key] is app + title; the first entry per app is that app's current book. */
@@ -134,12 +139,7 @@ class BookStore(
                 list.sortByDescending { it.lastPlayed }
                 saveRecents(ctx, list.take(MAX_RECENTS))
 
-                if (!coverFile(ctx, coverId(key)).exists()) {
-                    val bmp = md.getBitmap(MediaMetadata.METADATA_KEY_ART)
-                        ?: md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-                        ?: md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
-                    if (bmp != null) saveArt(coverFile(ctx, coverId(key)), bmp)
-                }
+                updateCover(ctx, key, md)
             }
         }
         if (playing) select(ctx, pkg)
@@ -150,12 +150,73 @@ class BookStore(
         val endBucket = remaining?.let { if (playing) (SystemClock.elapsedRealtime() + it) / 2000 else it / 2000 }
         val b = current(ctx, pkg)
         return listOf(
-            pkg, playing, key, b?.chapter, b?.author, coverFile(ctx, coverId(key)).exists(),
+            pkg, playing, key, b?.chapter, b?.author, prefs(ctx).getString("art_fp_${coverId(key)}", ""),
             selected(ctx), endBucket, Media.speed(c), Media.actions(c),
         ).joinToString("|")
     }
 
     // --- Covers: one rounded PNG per book, served to the launcher by ArtProvider. ---
+
+    /**
+     * Saves the best cover the app reports, and replaces it when a better or different one arrives.
+     * Apps like Audible can first send a placeholder (its grey logo) and the real cover a moment
+     * later, so a cover is never "done" after the first save.
+     * Real cover art (art / album art bitmaps, or their URIs) is STRONG; the small display icon is
+     * WEAK and only used when nothing better was ever saved.
+     */
+    private fun updateCover(ctx: Context, key: String, md: MediaMetadata) {
+        val strong = md.getBitmap(MediaMetadata.METADATA_KEY_ART)
+            ?: md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+            ?: loadUri(ctx, md.getString(MediaMetadata.METADATA_KEY_ART_URI))
+            ?: loadUri(ctx, md.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
+        if (strong != null) {
+            saveCover(ctx, key, strong, STRONG)
+            return
+        }
+        val weak = md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
+            ?: loadUri(ctx, md.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI))
+        if (weak != null) saveCover(ctx, key, weak, WEAK)
+    }
+
+    private fun saveCover(ctx: Context, key: String, bmp: Bitmap, level: Int) {
+        val id = coverId(key)
+        val file = coverFile(ctx, id)
+        val p = prefs(ctx)
+        val fp = fingerprint(bmp)
+        if (file.exists()) {
+            // Covers saved before this check existed count as weak, so real art can replace them.
+            val saved = p.getInt("art_lvl_$id", WEAK)
+            if (level == WEAK) return // a weak image never replaces a cover
+            if (saved == STRONG && fp == p.getString("art_fp_$id", null)) return // same cover
+        }
+        saveArt(file, bmp)
+        p.edit().putInt("art_lvl_$id", level).putString("art_fp_$id", fp).apply()
+    }
+
+    /** A cover image the app gives as a link it lets others read; links we can't open are skipped. */
+    private fun loadUri(ctx: Context, uri: String?): Bitmap? {
+        if (uri.isNullOrBlank()) return null
+        return try {
+            ctx.contentResolver.openInputStream(Uri.parse(uri))?.use { BitmapFactory.decodeStream(it) }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** A rough fingerprint (8×8 thumbnail) to tell whether a cover actually changed. */
+    private fun fingerprint(src: Bitmap): String {
+        val soft = if (src.config == Bitmap.Config.HARDWARE) src.copy(Bitmap.Config.ARGB_8888, false) else src
+        val small = Bitmap.createScaledBitmap(soft, 8, 8, true)
+        val px = IntArray(64)
+        small.getPixels(px, 0, 8, 0, 0, 8, 8)
+        val bytes = ByteArray(64 * 3)
+        px.forEachIndexed { i, c ->
+            bytes[i * 3] = ((c shr 16 and 0xFF) / 16).toByte()
+            bytes[i * 3 + 1] = ((c shr 8 and 0xFF) / 16).toByte()
+            bytes[i * 3 + 2] = ((c and 0xFF) / 16).toByte()
+        }
+        return MessageDigest.getInstance("SHA-1").digest(bytes).take(8).joinToString("") { "%02x".format(it) }
+    }
 
     fun coverId(key: String): String {
         val digest = MessageDigest.getInstance("SHA-1").digest(key.toByteArray())
@@ -183,7 +244,7 @@ class BookStore(
         list.add(Book(key, pkg, title, null, author, RECOVERED, mediaId))
         list.sortByDescending { it.lastPlayed }
         saveRecents(ctx, list.take(MAX_RECENTS))
-        if (art != null && !coverFile(ctx, coverId(key)).exists()) saveArt(coverFile(ctx, coverId(key)), art)
+        if (art != null) saveCover(ctx, key, art, WEAK)
     }
 
     /**

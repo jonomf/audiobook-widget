@@ -168,9 +168,11 @@ class MainActivity : Activity() {
             val list = if (names.isEmpty()) "no extra actions" else names.joinToString(", ")
             val queue = c.queue?.size ?: 0
             val detail = when (Profile.of(c.packageName)) {
-                Profile.BOOKS ->
-                    if (Media.bookmarkAction(c) != null) "Bookmarks go into $label too."
+                Profile.BOOKS -> {
+                    val bm = if (Media.bookmarkAction(c) != null) "Bookmarks go into $label too."
                     else "No bookmark action, so bookmarks are saved in this widget only."
+                    "$bm\n  Cover sent: ${describeCover(c)}"
+                }
                 Profile.PODCASTS -> {
                     val md = c.metadata
                     "Reports: title \"${md?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE).orEmpty()}\", " +
@@ -189,6 +191,20 @@ class MainActivity : Activity() {
         val intent = UpdateStatus.updaterIntent(this)
             ?: Intent(Intent.ACTION_VIEW, Uri.parse(UpdateStatus.UPDATER_RELEASES))
         startActivity(intent)
+    }
+
+    /** Which cover images the app hands to other apps right now (to debug missing/placeholder covers). */
+    private fun describeCover(c: android.media.session.MediaController): String {
+        val md = c.metadata ?: return "no details yet"
+        fun bmp(k: String, name: String) = md.getBitmap(k)?.let { "$name ${it.width}×${it.height}" }
+        fun uri(k: String, name: String) = md.getString(k)?.takeIf { it.isNotBlank() }?.let { "$name link" }
+        return listOfNotNull(
+            bmp(android.media.MediaMetadata.METADATA_KEY_ART, "art"),
+            bmp(android.media.MediaMetadata.METADATA_KEY_ALBUM_ART, "album art"),
+            uri(android.media.MediaMetadata.METADATA_KEY_ART_URI, "art"),
+            uri(android.media.MediaMetadata.METADATA_KEY_ALBUM_ART_URI, "album art"),
+            bmp(android.media.MediaMetadata.METADATA_KEY_DISPLAY_ICON, "small icon"),
+        ).joinToString(", ").ifEmpty { "none" }
     }
 
     private fun heading(text: String) = TextView(this).apply {
