@@ -238,6 +238,6 @@ class MainActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     companion object {
-        const val RELEASES_URL = "https://github.com/jonomf/audiobook-widget/releases/latest"
+        const val RELEASES_URL = "https://github.com/jonomf/media-widget/releases/latest"
     }
 }

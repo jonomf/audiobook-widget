@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "audiobook-widget"
+rootProject.name = "media-widget"
 include(":app")

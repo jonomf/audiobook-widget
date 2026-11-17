@@ -78,8 +78,8 @@
             <intent-filter>
                 <action android:name="com.jono.widgets.UPDATABLE" />
             </intent-filter>
-            <meta-data android:name="com.jono.widgets.repo" android:value="jonomf/audiobook-widget" />
-            <meta-data android:name="com.jono.widgets.asset" android:value="audiobook-widget.apk" />
+            <meta-data android:name="com.jono.widgets.repo" android:value="jonomf/media-widget" />
+            <meta-data android:name="com.jono.widgets.asset" android:value="media-widget.apk" />
         </receiver>
 
         <!-- Audiobooks widget (Libby + Audible). -->
