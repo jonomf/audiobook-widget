@@ -180,7 +180,7 @@ class MainActivity : Activity() {
                 }
                 else -> {
                     val names2 = MusicStore.queueLog(this).joinToString("\n    ") { it }.ifEmpty { "none yet" }
-                    "Queue items shared: $queue\n  Recent queue names (album / mix detection):\n    $names2"
+                    "${MusicStore.gridReport(this)}\n  Queue items shared: $queue\n  Recent queue names (album / mix detection):\n    $names2"
                 }
             }
             "• $label: $list\n  $detail"

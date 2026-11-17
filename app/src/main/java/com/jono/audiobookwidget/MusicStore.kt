@@ -185,6 +185,22 @@ object MusicStore {
     }
 
     /** The last few queue names seen and how each was classified, for the setup screen. */
+    /** For the setup screen: what the music grid has to work with, and why a song didn't count. */
+    fun gridReport(ctx: Context): String {
+        val song = recents(ctx).firstOrNull()
+        val groups = groups(ctx)
+        val others = otherGroups(ctx)
+        val why = when {
+            song == null -> "no song seen yet"
+            song.album == null -> "YouTube Music didn't report an album for \"${song.title}\""
+            norm(song.album) == norm(song.title) -> "\"${song.title}\" looks like a single (album = title)"
+            else -> "album \"${song.album}\""
+        }
+        val names = groups.take(6).joinToString(", ") { "${it.title} (${it.kind})" }.ifEmpty { "none" }
+        return "Last song: $why\n  Albums/mixes remembered: ${groups.size} ($names)\n" +
+            "  Shown in grids (not the current one): ${others.size}"
+    }
+
     fun queueLog(ctx: Context): List<String> {
         val raw = prefs(ctx).getString("queue_log", null) ?: return emptyList()
         return try {
