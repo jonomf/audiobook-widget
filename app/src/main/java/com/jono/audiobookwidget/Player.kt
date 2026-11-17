@@ -120,7 +120,7 @@ object Player {
 
     private fun Request.label() = when {
         resume -> "resume"
-        mediaId != null -> "id"
+        mediaId != null -> "id $mediaId"
         else -> "\"$query\""
     }
 
@@ -186,6 +186,16 @@ class PlayActivity : Activity() {
      * which the app handles itself (it may flash open); else just open the app.
      */
     private fun fallback(r: Player.Request) {
+        // A YouTube video id: open YouTube Music straight on it, playing (not on a search page).
+        val video = r.mediaId?.let { VIDEO_ID.find(it)?.value }
+        if (r.pkg == Sources.YTMUSIC.pkg && video != null) {
+            val watch = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://music.youtube.com/watch?v=$video"))
+                .setPackage(r.pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                startActivity(watch)
+                return
+            } catch (e: Exception) { }
+        }
         if (!r.resume && r.query.isNotEmpty()) {
             val search = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).apply {
                 setPackage(r.pkg)
@@ -213,6 +223,8 @@ class PlayActivity : Activity() {
     }
 
     companion object {
+        /** An 11-character YouTube video id, alone or inside a longer media id. */
+        private val VIDEO_ID = Regex("(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{11}(?![A-Za-z0-9_-])")
         const val EXTRA_PKG = "pkg"
         const val EXTRA_RESUME = "resume"
         const val EXTRA_MEDIA_ID = "mediaId"

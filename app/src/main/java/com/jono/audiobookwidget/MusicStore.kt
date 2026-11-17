@@ -62,6 +62,8 @@ object MusicStore {
         val kind: String,
         val coverKey: String,
         val lastPlayed: Long,
+        /** YouTube Music's own id to start it from (its first queue item, else the song), if it shared one. */
+        val mediaId: String? = null,
     )
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("music_state", Context.MODE_PRIVATE)
@@ -80,6 +82,7 @@ object MusicStore {
                     kind = o.getString("kind"),
                     coverKey = o.getString("coverKey"),
                     lastPlayed = o.optLong("lastPlayed"),
+                    mediaId = o.optString("mediaId").takeIf { it.isNotBlank() },
                 )
             }
         } catch (e: Exception) {
@@ -127,7 +130,7 @@ object MusicStore {
         return Group(key, album, song.artist, GROUP_ALBUM, song.key, song.lastPlayed)
     }
 
-    private fun rememberGroup(ctx: Context, song: Song, queueName: String?, playing: Boolean) {
+    private fun rememberGroup(ctx: Context, song: Song, queueName: String?, playing: Boolean, startId: String?) {
         val fresh = groupFor(song, queueName)
         prefs(ctx).edit().putString("current_group", fresh?.key ?: "").apply()
         if (fresh == null) return
@@ -144,6 +147,7 @@ object MusicStore {
         list.add(
             fresh.copy(
                 coverKey = if (keepCover) old!!.coverKey else song.key,
+                mediaId = startId ?: old?.mediaId,
                 lastPlayed = if (playing || old == null) System.currentTimeMillis() else old.lastPlayed,
             )
         )
@@ -233,6 +237,7 @@ object MusicStore {
                 put("kind", g.kind)
                 put("coverKey", g.coverKey)
                 put("lastPlayed", g.lastPlayed)
+                put("mediaId", g.mediaId ?: "")
             })
         }
         prefs(ctx).edit().putString("groups", arr.toString()).apply()
@@ -305,7 +310,10 @@ object MusicStore {
                 saveGroups(ctx, list.mapNotNull { groupFor(it, null) }.distinctBy { it.key })
                 p.edit().putInt("groups_version", GROUPS_VERSION).apply()
             }
-            rememberGroup(ctx, song, queueName(c), playing)
+            // Its own id to start this album/mix again: the queue's first item when the queue is it.
+            val startId = c.queue?.firstOrNull()?.description?.mediaId
+                ?: md.getString(MediaMetadata.METADATA_KEY_MEDIA_ID)
+            rememberGroup(ctx, song, queueName(c), playing, startId)
             logQueueName(ctx, c.queueTitle?.toString(), song)
             saveRecents(ctx, list.take(MAX_RECENTS))
 

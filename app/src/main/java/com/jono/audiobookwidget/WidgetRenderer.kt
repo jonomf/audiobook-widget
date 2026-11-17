@@ -642,7 +642,7 @@ object WidgetRenderer {
                 }
                 g.artist?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
             }
-            return playTap(ctx, code, e.pkg, false, null, listOfNotNull(g.title, g.artist).joinToString(" "), search)
+            return playTap(ctx, code, e.pkg, false, g.mediaId, listOfNotNull(g.title, g.artist).joinToString(" "), search)
         }
         val search = Bundle().apply {
             if (e.profile == Profile.MUSIC) putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
@@ -864,7 +864,7 @@ object WidgetRenderer {
             g.artist?.let { putString(MediaStore.EXTRA_MEDIA_ARTIST, it) }
         }
         val query = listOfNotNull(g.title, g.artist).joinToString(" ")
-        return playTap(ctx, 100 + index, Sources.YTMUSIC.pkg, false, null, query, search)
+        return playTap(ctx, 100 + index, Sources.YTMUSIC.pkg, false, g.mediaId, query, search)
     }
 
     /** A song: ask YouTube Music to find and play it. */
