@@ -1,5 +1,7 @@
 # Media widgets (Audiobooks, Music, Podcasts + Now Playing)
 
+![Now Playing widget at 4×1: music, audiobook and podcast covers with play/pause, plus what's playing](docs/now-playing-4x1.png)
+
 One app, home-screen widgets that look and behave the same at every size:
 - **Audiobooks**: whatever **Libby** or **Audible** is playing. It follows whichever app is playing.
 - **Music**: whatever **YouTube Music** is playing (merged in from jonomf/ytmusic-widget).
