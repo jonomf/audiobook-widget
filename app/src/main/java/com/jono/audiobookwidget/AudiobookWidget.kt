@@ -23,6 +23,7 @@ class PodcastWidget : MediaWidget(Profile.PODCASTS)
  */
 class NowPlayingWidget : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
+        ClaudeLink.syncShortcut(ctx)
         WidgetRenderer.renderAll(ctx)
     }
 
@@ -51,6 +52,7 @@ class NowPlayingWidget : AppWidgetProvider() {
 abstract class MediaWidget(private val profile: Profile) : AppWidgetProvider() {
 
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
+        ClaudeLink.syncShortcut(ctx)
         WidgetRenderer.renderAll(ctx)
     }
 

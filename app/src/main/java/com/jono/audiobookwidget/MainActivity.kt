@@ -66,6 +66,7 @@ class MainActivity : Activity() {
             setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) }
         })
 
+        ClaudeLink.addTopButton(this, col)
         ClaudeLink.addSection(this, col) { WidgetRenderer.renderAll(this) }
 
         // --- Playback access ---
