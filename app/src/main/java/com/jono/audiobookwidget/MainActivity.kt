@@ -112,6 +112,26 @@ class MainActivity : Activity() {
             }
         })
 
+        // --- Recent grids ---
+        col.addView(heading("Recent grids"))
+        col.addView(android.widget.Switch(this).apply {
+            text = "Include YouTube Music albums and mixes in Now Playing"
+            textSize = 15f
+            isChecked = MusicStore.inMixGrid(this@MainActivity)
+            setOnCheckedChangeListener { _, on ->
+                MusicStore.setInMixGrid(this@MainActivity, on)
+                WidgetRenderer.renderAll(this@MainActivity)
+            }
+        })
+        col.addView(TextView(this).apply {
+            text = "Off by default. Audiobooks and podcasts start playing right where you are when you tap " +
+                "them, but YouTube Music ignores that request from other apps, so its tiles can only open " +
+                "YouTube Music. Your current song's play/pause button works either way."
+            textSize = 13f
+            alpha = 0.7f
+            setPadding(0, dp(4), 0, dp(8))
+        })
+
         // --- What each app allows (e.g. whether bookmarks can go into the app itself) ---
         col.addView(heading("App actions"))
         appActions = TextView(this).apply {

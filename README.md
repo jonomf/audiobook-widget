@@ -14,7 +14,9 @@ One app, home-screen widgets that look and behave the same at every size:
   the three buttons + what's playing (tap: open its app) · 2×2 buttons + info in a grid · 2×3+ adds a
   recent list · 1-wide tall: a
   column · bigger sizes add a tight grid of small covers, no words: recent albums and mixes, podcast
-  shows (one per show) and books, newest first; tap one to play it.
+  shows (one per show) and books, newest first; tap one to play it. YouTube Music albums and mixes
+  are left out by default (setting: **Recent grids**), because YouTube Music ignores background play
+  requests from other apps, so their tiles could only open it.
 
 They differ in content and in the controls of the bigger sizes / full panel:
 
@@ -26,8 +28,9 @@ They differ in content and in the controls of the bigger sizes / full panel:
 | Controls | chapter back/next, skip back/forward, speed, bookmark | previous/next, YouTube Music's own buttons (like, dislike…) | skip back/forward, speed, Pocket Casts' own buttons |
 | Extra in full panel | bookmarks (tap to jump back), Libby/Audible switcher | | |
 
-**Tapping any recent item plays it** without opening its app (book: resumes or plays it in Libby or
-Audible; song/album/mix: YouTube Music finds and plays it). This uses the same requests Android Auto
+**Tapping a recent book or podcast plays it** without opening its app (resumes or plays it in Libby,
+Audible or Pocket Casts). YouTube Music is the exception: it ignores these requests from other apps,
+so its album/song tiles (Music widget) open YouTube Music on that song instead. This uses the same requests Android Auto
 and Assistant send; the app only opens if it turns the request down.
 
 Both: up next, progress bar with times, live "time left", update symbol, and on every smaller size

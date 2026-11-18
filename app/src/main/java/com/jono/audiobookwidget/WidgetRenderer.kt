@@ -574,7 +574,8 @@ object WidgetRenderer {
             MixEntry(Profile.MUSIC, "m:${s.key}", Sources.YTMUSIC.pkg, s.title, s.artist, s.album,
                 MusicStore.coverUri(ctx, s), null, s.lastPlayed, true)
         }
-        val groups = MusicStore.otherGroups(ctx).map { g ->
+        // Albums/mixes only if turned on: YouTube Music won't play them from a tap without opening.
+        val groups = (if (MusicStore.inMixGrid(ctx)) MusicStore.otherGroups(ctx) else emptyList()).map { g ->
             MixEntry(Profile.MUSIC, "g:${g.key}", Sources.YTMUSIC.pkg, g.title, g.artist, null,
                 MusicStore.coverUri(ctx, g.coverKey), null, g.lastPlayed, false, g)
         }

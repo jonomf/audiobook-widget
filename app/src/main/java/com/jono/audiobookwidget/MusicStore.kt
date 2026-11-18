@@ -155,6 +155,16 @@ object MusicStore {
         saveGroups(ctx, list.take(MAX_GROUPS))
     }
 
+    /**
+     * Whether Now Playing's recent grid includes YouTube Music albums and mixes. Off by default:
+     * YouTube Music ignores background play requests from other apps, so a tap can only open it.
+     */
+    fun inMixGrid(ctx: Context): Boolean = prefs(ctx).getBoolean("in_mix_grid", false)
+
+    fun setInMixGrid(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean("in_mix_grid", on).apply()
+    }
+
     /** Other albums and mixes to show: not what's playing now, and no two with the same art. */
     fun otherGroups(ctx: Context): List<Group> {
         val current = prefs(ctx).getString("current_group", null)
@@ -202,7 +212,8 @@ object MusicStore {
         }
         val names = groups.take(6).joinToString(", ") { "${it.title} (${it.kind})" }.ifEmpty { "none" }
         return "Last song: $why\n  Albums/mixes remembered: ${groups.size} ($names)\n" +
-            "  Shown in grids (not the current one): ${others.size}"
+            "  Shown in grids (not the current one): ${others.size}" +
+            (if (inMixGrid(ctx)) "" else " in the Music widget; Now Playing's grid: off (setting)")
     }
 
     fun queueLog(ctx: Context): List<String> {
